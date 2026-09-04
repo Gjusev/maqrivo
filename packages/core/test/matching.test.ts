@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeName, similarity } from "../src/matching/normalize";
+import { normalizeName, similarity, tokenize } from "../src/matching/normalize";
 import { resolveProduct, type ProductCandidate } from "../src/matching/resolve";
 
 function candidate(partial: Partial<ProductCandidate> & { id: string; name: string }): ProductCandidate {
@@ -28,6 +28,21 @@ describe("name normalization", () => {
   it("collapses separators", () => {
     expect(normalizeName("  Poulet    Fermier  ")).toBe("poulet fermier");
     expect(normalizeName("Dinde-Hachée")).toBe("dinde hachee");
+  });
+
+  it("splits digit-letter boundaries — till labels match pack text", () => {
+    expect(tokenize("RIZ BASMATI 1KG")).toEqual(["riz", "basmati", "1", "kg"]);
+    expect(similarity("RIZ BASMATI 1KG", "Riz basmati 1 kg")).toBe(1);
+  });
+
+  it("stems French plurals — FILET matches Filets", () => {
+    expect(tokenize("FILETS")).toEqual(["filet"]);
+    expect(similarity("FILET POULET 600G", "Filets de poulet 600 g")).toBeGreaterThan(0.7);
+  });
+
+  it("drops French stop-words — POULET matches Filets de poulet", () => {
+    expect(tokenize("Filets de poulet 600 g")).toEqual(["filet", "poulet", "600", "g"]);
+    expect(similarity("FILET POULET 600G", "Filets de poulet 600 g")).toBe(1);
   });
 
   it("similarity is symmetric and 0..1", () => {
@@ -100,6 +115,16 @@ describe("ProductResolution", () => {
     expect(r.productId).toBeNull();
     expect(r.tiedCandidates).toContain("a");
     expect(r.tiedCandidates).toContain("b");
+  });
+
+  it("missing brand on one side is neutral — till labels still match", () => {
+    // Receipt labels carry no brand; that must not sink an otherwise exact name.
+    const r = resolveProduct(
+      { name: "RIZ BASMATI 1KG", brand: null, barcode: null, retailerId: null, retailerProductId: null, packageQuantity: null, packageUnit: null },
+      [carrefourChicken, candidate({ id: "riz", name: "Riz basmati 1 kg", brand: "Carrefour" })],
+    );
+    expect(r.state).toBe("PROBABLE");
+    expect(r.productId).toBe("riz");
   });
 
   it("UNRESOLVED when nothing is close enough — better no match than a wrong one", () => {

@@ -20,8 +20,23 @@ export function normalizeName(input: string): string {
     .trim();
 }
 
+/** French structural stop-words: carry no product identity, only noise. */
+const STOP_WORDS = new Set([
+  "de", "du", "des", "la", "le", "les", "d", "l", "au", "aux", "et", "en",
+  "a", "un", "une", "duo", "pack",
+]);
+
 export function tokenize(input: string): string[] {
-  return normalizeName(input).split(" ").filter((t) => t.length > 0);
+  return normalizeName(input)
+    // Split digit-letter boundaries so till labels ("1KG") match pack text ("1 kg").
+    .replace(/(\d)([a-z%])/g, "$1 $2")
+    .replace(/([a-z%])(\d)/g, "$1 $2")
+    .split(" ")
+    .filter((t) => t.length > 0)
+    // Light French plural stem: "filets" ≡ "filet" (tokens of 4+ chars only,
+    // so "os"/"riz" style words never lose meaning).
+    .map((t) => (t.length >= 4 && t.endsWith("s") ? t.slice(0, -1) : t))
+    .filter((t) => !STOP_WORDS.has(t));
 }
 
 /** Token-set (Dice) similarity on normalized names: 0..1, deterministic. */

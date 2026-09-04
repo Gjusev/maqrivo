@@ -71,11 +71,11 @@ export interface CatalogueCandidate {
   position: "top" | "middle" | "bottom" | null;
 }
 
-/** Parse "2,49" / "2.49" / "2€49" → cents; null when absent or ambiguous. */
-export function eurosToCents(value: number | null | undefined): number | null {
-  if (value === null || value === undefined) return null;
-  if (!Number.isFinite(value) || value < 0 || value > 10_000) return null;
-  return Math.round(value * 100);
+/** Parse 2.49 / "2,49" / "2,49 €" → cents; null when absent or ambiguous. */
+export function eurosToCents(value: unknown): number | null {
+  const euros = parsePrintedPrice(value);
+  if (euros === null || euros > 10_000) return null;
+  return Math.round(euros * 100);
 }
 
 /**

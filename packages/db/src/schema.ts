@@ -8,4 +8,5 @@ export * from "./schema/evidence";
 export * from "./schema/recipes";
 export * from "./schema/pantry";
 export * from "./schema/plans";
+export * from "./schema/receipts";
 export * from "./schema/ops";

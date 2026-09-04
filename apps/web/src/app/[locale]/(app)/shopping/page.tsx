@@ -13,6 +13,7 @@ import { ShoppingItemRow } from "./shopping-item-row";
 export default async function ShoppingPage() {
   const t = await getTranslations("Shopping");
   const tc = await getTranslations("Common");
+  const t2 = await getTranslations("Receipts");
   const locale = await getLocale();
   const session = await getSessionContext();
   if (!session) return null;
@@ -29,7 +30,14 @@ export default async function ShoppingPage() {
   if (!plan) {
     return (
       <>
-        <PageHeader title={t("title")} />
+        <PageHeader
+        title={t("title")}
+        action={
+          <Link href="/shopping/receipts" className="btn-secondary text-xs">
+            {t2("title")}
+          </Link>
+        }
+      />
         <EmptyState
           icon={BasketIcon}
           title={t("noShoppingPlan")}
@@ -78,7 +86,14 @@ export default async function ShoppingPage() {
   if (items.length === 0) {
     return (
       <>
-        <PageHeader title={t("title")} />
+        <PageHeader
+        title={t("title")}
+        action={
+          <Link href="/shopping/receipts" className="btn-secondary text-xs">
+            {t2("title")}
+          </Link>
+        }
+      />
         <EmptyState icon={BasketIcon} title={t("empty")} />
       </>
     );
@@ -86,7 +101,14 @@ export default async function ShoppingPage() {
 
   return (
     <>
-      <PageHeader title={t("title")} />
+      <PageHeader
+        title={t("title")}
+        action={
+          <Link href="/shopping/receipts" className="btn-secondary text-xs">
+            {t2("title")}
+          </Link>
+        }
+      />
 
       <div className="mb-4 card p-4">
         <div className="flex items-center justify-between gap-3">

@@ -90,9 +90,9 @@ function scoredSimilarity(ref: ExternalProductRef, candidate: ProductCandidate):
   const brandScore =
     ref.brand !== null && candidate.brand !== null
       ? similarity(ref.brand, candidate.brand)
-      : ref.brand === null && candidate.brand === null
-        ? 0.5
-        : 0;
+      : 0.5; // brand unknown on either side: absence of evidence, not mismatch
+              // (receipt labels carry no brand; penalising them would break
+              // exactly the till-label → product path)
   const packagingScore =
     ref.packageQuantity !== null &&
     candidate.packageQuantity !== null &&
