@@ -1,0 +1,44 @@
+# Production deployment: docker compose -f compose.prod.yaml up -d
+# Configure via .env (see .env.example) or your secret manager.
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      SIGNUP_INVITE_CODE: ${SIGNUP_INVITE_CODE}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      APP_URL: ${APP_URL}
+      AI_PROVIDER: ${AI_PROVIDER:-zai}
+      ZAI_API_KEY: ${ZAI_API_KEY:-}
+      ZAI_TEXT_MODEL: ${ZAI_TEXT_MODEL:-glm-5.3}
+      ZAI_VISION_MODEL: ${ZAI_VISION_MODEL:-glm-5.3-flash}
+      OVERPASS_ENDPOINT: ${OVERPASS_ENDPOINT:-https://overpass-api.de/api/interpreter}
+      PHOTON_ENDPOINT: ${PHOTON_ENDPOINT:-https://photon.komoot.io/api}
+      SOLVER_DIR: /opt/solver
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - uploads:/app/uploads
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: maqrivo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: maqrivo
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U maqrivo"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
+  uploads:

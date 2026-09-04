@@ -1,0 +1,42 @@
+{
+  "name": "@maqrivo/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "seed": "tsx src/scripts/seed.ts",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@maqrivo/core": "workspace:*",
+    "@maqrivo/db": "workspace:*",
+    "@maqrivo/solver-contract": "workspace:*",
+    "@phosphor-icons/react": "^2.1.10",
+    "better-auth": "^1.7.2",
+    "drizzle-orm": "^0.45.2",
+    "maplibre-gl": "^6.7.0",
+    "next": "16.3.4",
+    "next-intl": "^4.14.2",
+    "openai": "^7.10.0",
+    "pg-boss": "^12.30.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.4",
+    "tailwindcss": "^4",
+    "tsx": "^4.23.13",
+    "typescript": "^5",
+    "vitest": "^3.2.7"
+  }
+}

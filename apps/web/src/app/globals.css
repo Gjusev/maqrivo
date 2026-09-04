@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+/*
+ * Maqrivo design tokens. Neutral zinc base, single emerald accent,
+ * generous touch targets, food-forward typography (Geist via next/font).
+ * No gradients-on-gradients, no AI-purple, no glow.
+ */
+@theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "Cascadia Mono", monospace;
+
+  /* Brand accent: emerald, slightly desaturated for surfaces */
+  --color-brand-50: oklch(0.979 0.021 166.113);
+  --color-brand-100: oklch(0.95 0.052 163.051);
+  --color-brand-200: oklch(0.905 0.093 164.15);
+  --color-brand-300: oklch(0.845 0.143 164.978);
+  --color-brand-400: oklch(0.765 0.177 163.223);
+  --color-brand-500: oklch(0.696 0.17 162.48);
+  --color-brand-600: oklch(0.596 0.145 163.225);
+  --color-brand-700: oklch(0.508 0.118 165.612);
+  --color-brand-800: oklch(0.448 0.119 164.258);
+  --color-brand-900: oklch(0.393 0.095 164.14);
+
+  /* Warn/deal colors for prices & promotions */
+  --color-deal: oklch(0.577 0.245 27.325); /* red-600-ish, for strikethrough prices */
+}
+
+:root {
+  --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.04), 0 1px 3px 0 rgb(0 0 0 / 0.06);
+}
+
+@layer base {
+  body {
+    @apply bg-zinc-50 text-zinc-900 antialiased;
+  }
+
+  /* Large, thumb-friendly targets everywhere */
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    @apply min-h-11;
+  }
+
+  input,
+  select,
+  textarea {
+    @apply min-h-11 rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900
+      placeholder:text-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20;
+  }
+
+  label {
+    @apply mb-1.5 block text-sm font-medium text-zinc-700;
+  }
+
+  ::selection {
+    @apply bg-brand-200;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-brand-600 px-4
+      text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-700
+      active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-zinc-300
+      bg-white px-4 text-sm font-semibold text-zinc-700 shadow-sm transition-colors
+      hover:bg-zinc-50 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .btn-ghost {
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-3 text-sm
+      font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900
+      active:scale-[0.98];
+  }
+
+  .card {
+    @apply rounded-xl border border-zinc-200 bg-white shadow-[var(--shadow-card)];
+  }
+
+  .field-error {
+    @apply mt-1 text-sm text-red-600;
+  }
+}

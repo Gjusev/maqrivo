@@ -1,0 +1,11 @@
+[project]
+name = "maqrivo-solver"
+version = "0.1.0"
+description = "Maqrivo deterministic optimization worker (CP-SAT)"
+requires-python = ">=3.11"
+dependencies = [
+    "ortools>=9.15",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

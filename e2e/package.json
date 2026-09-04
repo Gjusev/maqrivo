@@ -1,0 +1,12 @@
+{
+  "name": "@maqrivo/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "playwright test --pass-with-no-tests"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^20.19.43"
+  }
+}

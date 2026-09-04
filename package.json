@@ -1,0 +1,29 @@
+{
+  "name": "maqrivo",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Personal nutrition, meal planning, grocery optimization and supermarket intelligence",
+  "packageManager": "pnpm@11.1.3",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @maqrivo/web dev",
+    "dev:deps": "docker compose up -d db",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "test:e2e": "pnpm --filter @maqrivo/e2e test",
+    "db:generate": "pnpm --filter @maqrivo/db generate",
+    "db:migrate": "pnpm --filter @maqrivo/db migrate",
+    "db:seed": "pnpm --filter @maqrivo/web seed",
+    "solver:check": "python -c \"import sys; sys.path.insert(0, 'solver'); import worker\" && echo solver-ok || echo solver-missing",
+    "solver:test": "cd solver && python -m pytest -q"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^9.39.5",
+    "typescript-eslint": "^8.69.0"
+  }
+}

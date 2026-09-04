@@ -1,0 +1,20 @@
+# Development dependencies. Production deployment: docs/deployment.md (M11).
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: maqrivo
+      POSTGRES_PASSWORD: maqrivo
+      POSTGRES_DB: maqrivo
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U maqrivo"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
