@@ -3,7 +3,7 @@
  * run the CP-SAT worker, persist meal plans and shopping plans with their
  * deterministic reason snapshots. AI is never in this path.
  */
-import { and, desc, eq, isNull, or } from "drizzle-orm";
+import { and, desc, eq, isNull, ne, or } from "drizzle-orm";
 import { db } from "../db";
 import {
   foodConcept,
@@ -466,6 +466,50 @@ export async function optimizeShopping(userId: string, weekStart: string, object
       storeId: ordered[i]!.id,
       sequenceIndex: i,
     });
+  }
+
+  // Manual/catalogue additions survive re-optimization: copy them over.
+  const priorPlan = (
+    await db
+      .select()
+      .from(shoppingPlan)
+      .where(eq(shoppingPlan.userId, userId))
+      .orderBy(desc(shoppingPlan.createdAt))
+      .limit(5)
+  ).find((p) => p.id !== created.id && p.status === "archived");
+  if (priorPlan) {
+    const manualItems = await db
+      .select()
+      .from(shoppingItem)
+      .where(and(eq(shoppingItem.shoppingPlanId, priorPlan.id), ne(shoppingItem.source, "solver")));
+    for (const item of manualItems.filter((i) => i.status !== "skipped")) {
+      await db.insert(shoppingItem).values({
+        shoppingPlanId: created.id,
+        storeId: item.storeId,
+        productId: item.productId,
+        label: item.label,
+        source: item.source,
+        requiredQuantity: item.requiredQuantity,
+        requiredUnit: item.requiredUnit,
+        purchaseQuantity: item.purchaseQuantity,
+        packageCount: item.packageCount,
+        priceBasis: item.priceBasis,
+        unitPriceCents: item.unitPriceCents,
+        effectiveCostCents: item.effectiveCostCents,
+        appliedPromotionId: item.appliedPromotionId,
+        reasons: item.reasons,
+        priceFreshness: item.priceFreshness,
+        status: item.status,
+        sortOrder: 1000 + item.sortOrder,
+      });
+    }
+    if (manualItems.length > 0) {
+      await db
+        .update(shoppingPlan)
+        .set({ totalCents: (created.totalCents ?? 0) + manualItems.filter((i) => i.status !== "skipped").reduce((sum, i) => sum + i.effectiveCostCents, 0) })
+        .where(eq(shoppingPlan.id, created.id));
+      created.totalCents = (created.totalCents ?? 0) + manualItems.filter((i) => i.status !== "skipped").reduce((sum, i) => sum + i.effectiveCostCents, 0);
+    }
   }
 
   let sortOrder = 0;

@@ -101,9 +101,11 @@ export const shoppingItem = pgTable(
     storeId: uuid("store_id")
       .notNull()
       .references(() => store.id, { onDelete: "cascade" }),
-    productId: uuid("product_id")
-      .notNull()
-      .references(() => product.id, { onDelete: "restrict" }),
+    // Solver-picked items reference a product; items added straight from a
+    // catalogue page or manually carry a free-text label instead.
+    productId: uuid("product_id").references(() => product.id, { onDelete: "restrict" }),
+    label: text("label"),
+    source: text("source").notNull().default("solver"), // solver | catalogue | manual
     requiredQuantity: numeric("required_quantity", { precision: 10, scale: 3 }).notNull(),
     requiredUnit: text("required_unit").notNull(),
     purchaseQuantity: numeric("purchase_quantity", { precision: 10, scale: 3 }).notNull(),

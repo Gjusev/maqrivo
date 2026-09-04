@@ -53,7 +53,7 @@ export default async function ShoppingPage() {
   const items = await db
     .select({ item: shoppingItem, product: product, concept: foodConcept })
     .from(shoppingItem)
-    .innerJoin(product, eq(shoppingItem.productId, product.id))
+    .leftJoin(product, eq(shoppingItem.productId, product.id))
     .leftJoin(foodConcept, eq(product.foodConceptId, foodConcept.id))
     .where(eq(shoppingItem.shoppingPlanId, plan.id))
     .orderBy(shoppingItem.sortOrder);
@@ -130,10 +130,11 @@ export default async function ShoppingPage() {
                   <ShoppingItemRow
                     key={item.id}
                     itemId={item.id}
-                    productName={p.name}
+                    productName={p?.name ?? item.label ?? "?"}
+                    fromCatalogue={item.source === "catalogue"}
                     conceptName={concept ? (locale === "fr" ? concept.nameFr : concept.nameEn) : null}
                     count={item.packageCount ?? Number(item.purchaseQuantity)}
-                    packLabel={p.packageQuantity ? `${Number(p.packageQuantity)} ${p.packageUnit}` : null}
+                    packLabel={p?.packageQuantity ? `${Number(p.packageQuantity)} ${p.packageUnit}` : null}
                     effectiveCents={item.effectiveCostCents}
                     priceFreshness={item.priceFreshness}
                     status={item.status}

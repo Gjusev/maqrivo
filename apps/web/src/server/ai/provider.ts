@@ -76,7 +76,7 @@ export class ZaiProvider implements AIProvider {
     });
     const raw = completion.choices[0]?.message?.content ?? "";
     try {
-      return call.schema.parse(JSON.parse(raw));
+      return call.schema.parse(JSON.parse(stripJsonFences(raw)));
     } catch {
       throw new AIUnavailableError(`model output failed schema validation: ${raw.slice(0, 1200)}`);
     }
@@ -100,11 +100,20 @@ export class ZaiProvider implements AIProvider {
     });
     const raw = completion.choices[0]?.message?.content ?? "";
     try {
-      return call.schema.parse(JSON.parse(raw));
+      return call.schema.parse(JSON.parse(stripJsonFences(raw)));
     } catch {
       throw new AIUnavailableError(`vision output failed schema validation: ${raw.slice(0, 160)}`);
     }
   }
+}
+
+/** Models often wrap JSON in markdown fences — strip them before parsing. */
+export function stripJsonFences(raw: string): string {
+  const fenced = /```(?:json)?\s*([\s\S]*?)```/.exec(raw);
+  const text = fenced ? fenced[1]! : raw;
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  return start >= 0 && end > start ? text.slice(start, end + 1) : text;
 }
 
 let providerInstance: AIProvider | null = null;

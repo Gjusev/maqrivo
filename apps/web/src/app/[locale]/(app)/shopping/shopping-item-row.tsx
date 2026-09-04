@@ -18,9 +18,11 @@ export function ShoppingItemRow({
   priceFreshness,
   status,
   reasonCode,
+  fromCatalogue,
 }: {
   itemId: string;
   productName: string;
+  fromCatalogue?: boolean;
   conceptName: string | null;
   count: number;
   packLabel: string | null;
@@ -32,6 +34,7 @@ export function ShoppingItemRow({
   const t = useTranslations("Shopping");
   const tf = useTranslations("Freshness");
   const tc = useTranslations("Common");
+  const t2 = useTranslations("Catalogues");
   const locale = useLocale();
   const [, startTransition] = useTransition();
   const [state, setState] = useOptimistic(status, (_current, next: string) => next);
@@ -65,6 +68,7 @@ export function ShoppingItemRow({
           {[
             conceptName,
             packLabel,
+            fromCatalogue ? t2("fromCatalogue") : null,
             priceFreshness === "stale" ? tf("stale") : null,
             reasonCode === "PROMO_ACTIVATED" ? t("appliedPromotion") : null,
           ]
