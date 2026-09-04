@@ -480,6 +480,18 @@
     "basketFailed": "Could not add to the list (enable a store first)",
     "aiNotConfigured": "Z.AI key required for extraction",
     "confirmed": "Confirmed offers",
-    "seePage": "View the page"
+    "seePage": "View the page",
+    "validFromLabel": "From",
+    "validUntilLabel": "Until"
+  },
+  "SettingsPage": {
+    "exportData": "Export my data (JSON)",
+    "exportHint": "Everything this account owns: profile, recipes, pantry, prices, plans.",
+    "deleteAccount": "Delete my account",
+    "deleteHint": "Permanently deletes all your data. Cannot be undone.",
+    "deleteConfirm": "Delete permanently? All your data will be lost.",
+    "deleted": "Account deleted",
+    "ingestion": "Ingestion (internal)",
+    "signOutHere": "Sign out"
   }
 }

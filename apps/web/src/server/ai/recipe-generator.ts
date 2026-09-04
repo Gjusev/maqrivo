@@ -9,7 +9,7 @@ import { isNull } from "drizzle-orm";
 import { db } from "../db";
 import { aiExtraction, foodConcept, recipe, recipeIngredient } from "@maqrivo/db";
 import { getSessionContext } from "../session";
-import { getAIProvider, AIUnavailableError } from "./provider";
+import { getAIProvider } from "./provider";
 import { totalNutrition, type IngredientNutrition, type NutritionPer100 } from "@maqrivo/core";
 
 const proposalSchema = z.object({

@@ -65,11 +65,11 @@ export function NewCatalogueButton({ variant = "secondary" }: { variant?: "prima
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="cat-from">{t("validity")} →</label>
+                  <label htmlFor="cat-from">{t("validFromLabel")}</label>
                   <input id="cat-from" name="validFrom" type="date" />
                 </div>
                 <div>
-                  <label htmlFor="cat-until">{t("validity")}</label>
+                  <label htmlFor="cat-until">{t("validUntilLabel")}</label>
                   <input id="cat-until" name="validUntil" type="date" />
                 </div>
               </div>

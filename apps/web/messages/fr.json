@@ -480,6 +480,18 @@
     "basketFailed": "Impossible d'ajouter à la liste (activez un magasin)",
     "aiNotConfigured": "Clé Z.AI requise pour l'extraction",
     "confirmed": "Offres confirmées",
-    "seePage": "Voir la page"
+    "seePage": "Voir la page",
+    "validFromLabel": "Du",
+    "validUntilLabel": "Au"
+  },
+  "SettingsPage": {
+    "exportData": "Exporter mes données (JSON)",
+    "exportHint": "Tout ce que ce compte possède : profil, recettes, garde-manger, prix, plans.",
+    "deleteAccount": "Supprimer mon compte",
+    "deleteHint": "Suppression définitive de toutes vos données. Impossible à annuler.",
+    "deleteConfirm": "Supprimer définitivement ? Toutes vos données seront perdues.",
+    "deleted": "Compte supprimé",
+    "ingestion": "Ingestion (interne)",
+    "signOutHere": "Se déconnecter"
   }
 }

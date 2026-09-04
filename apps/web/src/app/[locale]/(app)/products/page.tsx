@@ -16,7 +16,7 @@ export default async function ProductsPage() {
   if (!session) return null;
 
   const products = await db
-    .select({ product: product, conceptFr: foodConcept.nameFr, conceptEn: foodConcept.nameEn })
+    .select({ product: product, conceptFr: foodConcept.nameFr })
     .from(product)
     .leftJoin(foodConcept, eq(product.foodConceptId, foodConcept.id))
     .where(or(eq(product.ownerUserId, session.userId), isNull(product.ownerUserId)))
@@ -36,7 +36,7 @@ export default async function ProductsPage() {
           <EmptyState icon={PackageIcon} title={t("noProducts")} />
         ) : (
           <ul className="space-y-2">
-            {products.map(({ product: p, conceptFr, conceptEn }) => (
+            {products.map(({ product: p, conceptFr }) => (
               <li key={p.id}>
                 <Link
                   href={`/products/${p.id}`}

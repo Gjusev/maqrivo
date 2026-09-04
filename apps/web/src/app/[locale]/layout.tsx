@@ -4,6 +4,7 @@ import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
+import { ServiceWorkerRegistrar } from "@/components/service-worker";
 import "../globals.css";
 
 const geistSans = Geist({
@@ -56,6 +57,7 @@ export default async function LocaleLayout({
     <html lang={locale} className={`${geistSans.variable} ${geistMono.variable} h-full`}>
       <body className="flex min-h-[100dvh] flex-col">
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <ServiceWorkerRegistrar />
       </body>
     </html>
   );

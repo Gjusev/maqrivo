@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maqrivo — hors ligne</title>
+<style>
+  :root { color-scheme: light; }
+  body {
+    margin: 0; min-height: 100dvh; display: flex; align-items: center; justify-content: center;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: #fafafa; color: #18181b;
+  }
+  main { max-width: 24rem; padding: 2rem; text-align: center; }
+  h1 { font-size: 1.5rem; margin: 0 0 .5rem; }
+  p { color: #52525b; font-size: .95rem; line-height: 1.5; margin: 0 0 1.25rem; }
+  button {
+    min-height: 44px; padding: 0 1.25rem; border: 0; border-radius: .5rem;
+    background: #059669; color: #fff; font-size: .9rem; font-weight: 600;
+  }
+  button:active { transform: scale(.98); }
+  .hint { font-size: .8rem; color: #a1a1aa; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Hors ligne / Offline</h1>
+  <p>
+    La connexion est indisponible. Les pages déjà consultées restent
+    disponibles&nbsp;— rouvrez la liste de courses depuis l'écran d'accueil
+    de l'application.
+  </p>
+  <button onclick="location.reload()">Réessayer</button>
+  <p class="hint">Connection unavailable. Previously visited pages remain cached — reopen the shopping list from your home screen.</p>
+</main>
+</body>
+</html>
