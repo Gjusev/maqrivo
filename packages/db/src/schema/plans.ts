@@ -102,8 +102,12 @@ export const shoppingItem = pgTable(
       .notNull()
       .references(() => store.id, { onDelete: "cascade" }),
     // Solver-picked items reference a product; items added straight from a
-    // catalogue page or manually carry a free-text label instead.
-    productId: uuid("product_id").references(() => product.id, { onDelete: "restrict" }),
+    // catalogue page or manually carry a free-text label instead. Rows are
+    // denormalized purchase snapshots, so a deleted product unlinks rather
+    // than blocks — otherwise a user owning a custom product referenced by
+    // their own list could never delete their account (cascade order is not
+    // guaranteed to clear shopping items first).
+    productId: uuid("product_id").references(() => product.id, { onDelete: "set null" }),
     label: text("label"),
     source: text("source").notNull().default("solver"), // solver | catalogue | manual
     requiredQuantity: numeric("required_quantity", { precision: 10, scale: 3 }).notNull(),

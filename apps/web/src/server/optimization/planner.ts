@@ -26,7 +26,7 @@ import {
   userPreferences,
   userStorePrefs,
 } from "@maqrivo/db";
-import { getSessionContext } from "../session";
+import { getSessionContext, loadUserContext } from "../session";
 import {
   freshnessOf,
   netRequirements,
@@ -62,7 +62,14 @@ function mondayOf(date: Date): Date {
 export async function runWeeklyPlan(userId: string, objective?: string): Promise<PlanWeekResult> {
   const session = await getSessionContext();
   if (!session || session.userId !== userId) return { ok: false, error: "unauthorized" };
+  return runWeeklyPlanForUser(userId, objective);
+}
 
+/**
+ * Session-free pipeline core (seed scripts, tests): same behavior without an
+ * HTTP request context. Callers must have already established the identity.
+ */
+export async function runWeeklyPlanForUser(userId: string, objective?: string): Promise<PlanWeekResult> {
   const profile = (await db.select().from(nutritionProfile).where(eq(nutritionProfile.userId, userId)).orderBy(desc(nutritionProfile.createdAt)).limit(1))[0];
   const prefs = (await db.select().from(userPreferences).where(eq(userPreferences.userId, userId)).limit(1))[0];
   if (!profile) return { ok: false, error: "no-profile" };
@@ -75,7 +82,7 @@ export async function runWeeklyPlan(userId: string, objective?: string): Promise
   if (!mealResult.ok) return mealResult;
 
   // ── Phase 2: optimize basket from the plan's requirements ─────────────
-  const basketResult = await optimizeShopping(userId, weekStart, chosenObjective);
+  const basketResult = await optimizeShoppingForUser(userId, weekStart, chosenObjective);
   return basketResult;
 }
 
@@ -199,9 +206,20 @@ async function planWeekMeals(
 type Objective = "CHEAPEST" | "BALANCED" | "FEWEST_STORES" | "MINIMUM_TRAVEL" | "MAX_PROTEIN_PER_EURO" | "PROMOTION_FOCUSED" | "LOW_WASTE";
 
 export async function optimizeShopping(userId: string, weekStart: string, objectiveIn: string): Promise<PlanWeekResult> {
-  const objective = objectiveIn as Objective;
   const session = await getSessionContext();
   if (!session) return { ok: false, error: "unauthorized" };
+  return optimizeShoppingForUser(userId, weekStart, objectiveIn);
+}
+
+/** Session-free core: home coordinates come from the stored profile. */
+export async function optimizeShoppingForUser(
+  userId: string,
+  weekStart: string,
+  objectiveIn: string,
+): Promise<PlanWeekResult> {
+  const objective = objectiveIn as Objective;
+  const context = await loadUserContext(userId);
+  if (!context) return { ok: false, error: "unauthorized" };
 
   const profile = (await db.select().from(nutritionProfile).where(eq(nutritionProfile.userId, userId)).orderBy(desc(nutritionProfile.createdAt)).limit(1))[0];
   const prefs = (await db.select().from(userPreferences).where(eq(userPreferences.userId, userId)).limit(1))[0];
@@ -457,8 +475,8 @@ export async function optimizeShopping(userId: string, weekStart: string, object
 
   // Store sequence: nearest-neighbour from home.
   const visitedRows = usable.filter((s) => solution.visitedStores.includes(s.store.id));
-  const ordered = session.homeLat != null && session.homeLng != null
-    ? orderStoresByProximity({ lat: session.homeLat, lng: session.homeLng }, visitedRows.map((s) => s.store))
+  const ordered = context.homeLat != null && context.homeLng != null
+    ? orderStoresByProximity({ lat: context.homeLat, lng: context.homeLng }, visitedRows.map((s) => s.store))
     : visitedRows.map((s) => s.store);
   for (let i = 0; i < ordered.length; i++) {
     await db.insert(shoppingPlanStore).values({

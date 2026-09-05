@@ -14,14 +14,17 @@ import {
   pantryItem,
   priceObservation,
   product,
+  promotion,
   recipe,
   recipeIngredient,
   retailer,
   store,
   user as userTable,
   userPreferences,
+  userStorePrefs,
   usersProfile,
 } from "@maqrivo/db";
+import { runWeeklyPlanForUser } from "../server/optimization/planner";
 
 const DEV_EMAIL = "dev@maqrivo.local";
 const DEV_PASSWORD = "dev-password-123";
@@ -78,11 +81,12 @@ async function main() {
   const independent = (
     await db.select().from(retailer).where(eq(retailer.slug, "independent")).limit(1)
   )[0];
+  if (!independent) throw new Error("global seed missing independent retailer");
   const butcher = (
     await db
       .insert(store)
       .values({
-        retailerId: independent?.id ?? null,
+        retailerId: independent.id,
         name: "Boucherie Halal du Centre",
         format: "butcher",
         address: "12 rue de Bezons, 92400 Courbevoie",
@@ -95,6 +99,92 @@ async function main() {
       })
       .returning()
   )[0]!;
+
+  // Concept slug → id (global seed guarantees presence).
+  const conceptId = async (slug: string) =>
+    (await db.select().from(foodConcept).where(eq(foodConcept.slug, slug)).limit(1))[0]!.id;
+
+  // The planner only considers stores the user enabled (two-tier model).
+  await db.insert(userStorePrefs).values([
+    { userId, storeId: butcher.id, enabled: true, favorite: true, distanceM: 380 },
+  ]);
+
+  // Nearby chain supermarket: the basket optimizer needs priced grocery
+  // candidates beyond the butcher counter, or every non-meat requirement
+  // lands in "infeasible" and the shopping list stays empty.
+  const carrefour = (
+    await db.select().from(retailer).where(eq(retailer.slug, "carrefour")).limit(1)
+  )[0];
+  if (!carrefour) throw new Error("global seed missing carrefour retailer");
+  const market = (
+    await db
+      .insert(store)
+      .values({
+        retailerId: carrefour.id,
+        name: "Carrefour Market — Rond-Point Bezons",
+        format: "supermarket",
+        address: "52 rue du Bois, 92400 Courbevoie",
+        lat: 48.9021,
+        lng: 2.2462,
+        origin: "retailer",
+        source: "seed",
+        tags: [],
+      })
+      .returning()
+  )[0]!;
+  await db.insert(userStorePrefs).values({
+    userId,
+    storeId: market.id,
+    enabled: true,
+    favorite: false,
+    distanceM: 720,
+  });
+
+  // Catalog grocery items covering every seed-recipe concept (grams, so the
+  // planner's packaged-candidate branch applies). Poultry is halal-gated.
+  const GROCERY: [slug: string, nameFr: string, packG: number, cents: number, halal?: boolean][] = [
+    ["whole-chicken", "Poulet fermier halal (1,2 kg)", 1200, 899, true],
+    ["rice-basmati", "Riz basmati 1 kg", 1000, 285],
+    ["olive-oil", "Huile d'olive 75 cl", 750, 629],
+    ["onion", "Oignons jaunes 1 kg", 1000, 160],
+    ["carrot", "Carottes 1 kg", 1000, 110],
+    ["cumin", "Cumin moulu 40 g", 40, 195],
+    ["lentils-coral", "Lentilles corail 500 g", 500, 175],
+    ["canned-tomatoes", "Tomates concassées 400 g", 400, 95],
+    ["garlic", "Ail 200 g", 200, 140],
+    ["ginger", "Gingembre 100 g", 100, 120],
+    ["curry-powder", "Curry en poudre 50 g", 50, 185],
+    ["coconut-milk", "Lait de coco 400 ml", 400, 165],
+    ["oats", "Flocons d'avoine 500 g", 500, 115],
+    ["milk", "Lait demi-écrémé 1 L", 1000, 105],
+    ["banana", "Bananes 1 kg", 1000, 150],
+    ["protein-powder", "Whey protéine vanille 900 g", 900, 1990],
+    ["almonds", "Amandes 200 g", 200, 245],
+  ];
+  for (const [slug, nameFr, packG, cents, halal] of GROCERY) {
+    const item = (
+      await db
+        .insert(product)
+        .values({
+          name: nameFr,
+          nameFr,
+          foodConceptId: await conceptId(slug),
+          purchasingMode: "PACKAGED",
+          packageQuantity: String(packG),
+          packageUnit: "g",
+          source: "seed",
+          halalState: halal ? "CONFIRMED" : "UNKNOWN",
+        })
+        .returning()
+    )[0]!;
+    await db.insert(priceObservation).values({
+      productId: item.id,
+      storeId: market.id,
+      amountCents: cents,
+      priceBasis: "unit",
+      source: "retailer",
+    });
+  }
 
   // Weight-mode product sold at the butcher, linked to the chicken concept.
   const chicken = (
@@ -125,10 +215,23 @@ async function main() {
     createdByUserId: userId,
   });
 
-  // Three realistic seed recipes (structured ingredients → deterministic macros).
-  const conceptId = async (slug: string) =>
-    (await db.select().from(foodConcept).where(eq(foodConcept.slug, slug)).limit(1))[0]!.id;
+  // Deterministic provenance fixture for the Offers acceptance test. It is
+  // store-scoped so deleting/reseeding the dev user removes it by cascade.
+  await db.insert(promotion).values({
+    retailerId: independent.id,
+    storeId: butcher.id,
+    descriptionRaw: "Blanc de poulet — prix observé en magasin",
+    promoPriceCents: 790,
+    mechanism: "PROMO_PRICE",
+    validFrom: isoDateIn(0),
+    validUntil: isoDateIn(14),
+    source: "user",
+    verification: "USER_OBSERVED",
+    confidence: "HIGH",
+    createdByUserId: userId,
+  });
 
+  // Three realistic seed recipes (structured ingredients → deterministic macros).
   const mkRecipe = async (
     names: { fr: string; en: string },
     mealTypes: string[],
@@ -239,7 +342,15 @@ async function main() {
     { userId, foodConceptId: await conceptId("olive-oil"), quantity: String(500), unit: "ml" },
   ]);
 
-  console.log(`seed: dev user ${DEV_EMAIL} ready (profile, 3 recipes, pantry, butcher store, 1 price)`);
+  // Deterministic meal plan + shopping list through the REAL planner path
+  // (CP-SAT solver, no AI): the shopping acceptance test expects euro-priced
+  // solver items without clicking "generate" first.
+  const plan = await runWeeklyPlanForUser(userId);
+  if (!plan.ok) throw new Error(`seed plan generation failed: ${plan.error ?? "unknown"}`);
+
+  console.log(
+    `seed: dev user ${DEV_EMAIL} ready (profile, 3 recipes, pantry, butcher store, 1 price, 1 promotion, weekly plan)`,
+  );
 }
 
 function isoDateIn(days: number): string {

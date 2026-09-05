@@ -22,7 +22,9 @@ export default function SignInPage() {
     });
     setPending(false);
     if (result.error) {
-      setError(t("invalidCredentials"));
+      // Rate limiting (HTTP 429) is not a credentials problem; say so.
+      const status = (result.error as { status?: number }).status;
+      setError(status === 429 ? t("tooManyAttempts") : t("invalidCredentials"));
       return;
     }
     router.replace("/");

@@ -62,7 +62,8 @@
     "invalidInviteCode": "Invalid invite code",
     "emailInUse": "This address is already in use",
     "passwordTooShort": "Password must be at least 8 characters",
-    "demoHint": "Development account: dev@maqrivo.local / dev-password-123"
+    "demoHint": "Development account: dev@maqrivo.local / dev-password-123",
+    "tooManyAttempts": "Too many attempts. Try again in a few seconds."
   },
   "Today": {
     "title": "Today",

@@ -8,6 +8,10 @@ export default defineConfig({
   testDir: "./tests",
   timeout: 60_000,
   retries: 0,
+  // Both projects use the same deterministic dev account. Better Auth may
+  // reject concurrent session rotation for that identity, so keep this small
+  // acceptance suite serial and deterministic.
+  workers: 1,
   use: {
     baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3000",
     locale: "fr-FR",

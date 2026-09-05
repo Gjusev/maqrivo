@@ -25,6 +25,19 @@ export const auth = betterAuth({
     enabled: true,
     minPasswordLength: 8,
   },
+  // Better Auth hard-codes a special rule for credential endpoints
+  // (/sign-in*, /sign-up*, …) at 3 requests / 10 s / IP, overriding any
+  // global max. That is below a shared-IP household or a serial E2E run —
+  // a per-route custom rule is the only supported override. Brute force
+  // stays impractical (scrypt hashing + invite-gated sign-up).
+  rateLimit: {
+    enabled: true,
+    window: 10,
+    max: 10,
+    customRules: {
+      "/sign-in/email": { window: 10, max: 10 },
+    },
+  },
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
       if (ctx.path === "/sign-up/email") {
