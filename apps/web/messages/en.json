@@ -120,7 +120,11 @@
     "favorite": "Favorite",
     "unfavorite": "Remove from favorites",
     "duplicate": "Duplicate",
-    "generateWithAi": "Generate with AI"
+    "generateWithAi": "Generate with AI",
+    "breakfast": "Breakfast",
+    "lunch": "Lunch",
+    "dinner": "Dinner",
+    "snack": "Snack"
   },
   "Shopping": {
     "title": "Shopping list",
