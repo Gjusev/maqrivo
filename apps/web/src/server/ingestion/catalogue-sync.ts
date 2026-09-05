@@ -216,7 +216,9 @@ async function ingestStructuredItems(input: {
     seen.add(key);
 
     const pageUrl =
-      item.page != null ? input.catalogue.pageImageUrls[item.page - 1] || null : null;
+      (item.page != null ? input.catalogue.pageImageUrls[item.page - 1] || null : null) ??
+      input.catalogue.sourceUrl ??
+      null;
     const evidence =
       (
         await db
@@ -246,8 +248,13 @@ async function ingestStructuredItems(input: {
           regularPriceCents: item.regularPriceCents,
           promoPriceCents: item.priceCents,
           pricePerKgCents: item.pricePerKgCents,
-          mechanism: item.loyalty ? "LOYALTY_PRICE" : "PROMO_PRICE",
+          mechanism: item.mechanism ?? (item.loyalty ? "LOYALTY_PRICE" : "PROMO_PRICE"),
+          minQty: item.minQty ?? null,
+          payQty: item.payQty ?? null,
+          getQty: item.getQty ?? null,
+          discountPct: item.discountPct ?? null,
           loyaltyRequired: item.loyalty,
+          conditionsRaw: item.conditionsRaw ?? null,
           validFrom: input.catalogue.validFrom,
           validUntil: input.catalogue.validUntil,
           source: "catalogue",

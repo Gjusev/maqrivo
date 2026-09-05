@@ -68,6 +68,55 @@ export async function politeFetchJson<T>(
   throw lastError ?? new IntegrationError(source, "network", "unreachable");
 }
 
+/**
+ * Polite text fetch for official server-rendered integration pages. The same
+ * timeout, retry, identifying-UA and hard-stop rules as JSON integrations
+ * apply; callers parse the returned HTML as data and never execute it.
+ */
+export async function politeFetchText(
+  url: string,
+  options: PoliteFetchOptions,
+): Promise<string> {
+  const { source, timeoutMs = 15_000, headers = {}, accept = "text/html" } = options;
+
+  let lastError: IntegrationError | null = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, {
+        signal: controller.signal,
+        headers: { "User-Agent": APP_UA, accept, ...headers },
+      });
+      clearTimeout(timer);
+      if (res.status === 429 || res.status >= 500) {
+        lastError = new IntegrationError(source, "status", `HTTP ${res.status}`);
+        if (attempt === 0) {
+          await new Promise((resolve) => setTimeout(resolve, 800));
+          continue;
+        }
+        throw lastError;
+      }
+      if (!res.ok) {
+        throw new IntegrationError(source, "status", `HTTP ${res.status}`);
+      }
+      return await res.text();
+    } catch (err) {
+      clearTimeout(timer);
+      if (err instanceof IntegrationError) throw err;
+      if (attempt === 1) {
+        throw new IntegrationError(
+          source,
+          err instanceof Error && err.name === "AbortError" ? "timeout" : "network",
+          err instanceof Error ? err.message : String(err),
+        );
+      }
+      lastError = null;
+    }
+  }
+  throw lastError ?? new IntegrationError(source, "network", "unreachable");
+}
+
 const ALLOWED_IMAGE_MIME = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // mirrors the upload cap
 

@@ -35,6 +35,7 @@ export interface DiscoveredStoreCandidate {
 /** French enseignes → retailer slugs (seeded) + OSM brand matching hints. */
 const CHAIN_BRANDS: { slug: string; patterns: RegExp }[] = [
   { slug: "carrefour", patterns: /^(carrefour|carrefour city|carrefour market|carrefour express|carrefour contact|carrefour bio)$/i },
+  { slug: "auchan", patterns: /^(auchan|auchan supermarché|auchan supermarche)$/i },
   { slug: "intermarche", patterns: /^(intermarch|intermarché|intermarche super|intermarche express)$/i },
   { slug: "lidl", patterns: /^lidl$/i },
   { slug: "leclerc", patterns: /^(e\.?leclerc|leclerc drive|leclerc express)$/i },

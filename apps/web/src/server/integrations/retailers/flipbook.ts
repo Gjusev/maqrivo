@@ -27,6 +27,20 @@ export interface RemoteCatalogueItem {
   readonly loyalty: boolean;
   /** Per-offer validity text printed with the deal. */
   readonly validityText: string | null;
+  /** Typed terms when the retailer exposes a conditional promotion. */
+  readonly mechanism?:
+    | "PROMO_PRICE"
+    | "PERCENTAGE_OFF"
+    | "MULTIBUY"
+    | "BUY_X_GET_Y"
+    | "SECOND_UNIT_DISCOUNT"
+    | "LOYALTY_PRICE"
+    | "LOYALTY_CREDIT";
+  readonly minQty?: number | null;
+  readonly payQty?: number | null;
+  readonly getQty?: number | null;
+  readonly discountPct?: number | null;
+  readonly conditionsRaw?: string | null;
   /** 1-based leaflet page the deal appears on (provenance). */
   readonly page: number | null;
 }
@@ -38,6 +52,8 @@ export interface RemoteCatalogue {
   /** ISO dates YYYY-MM-DD. */
   readonly validFrom: string | null;
   readonly validUntil: string | null;
+  /** Human-viewable official page used as fallback evidence for items. */
+  readonly sourceUrl?: string | null;
   /** Page image URLs, in leaflet order (vision mode). */
   readonly pageImageUrls: readonly string[];
   /** Structured deals (items mode) — when present, pages are not fetched. */

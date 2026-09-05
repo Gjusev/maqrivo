@@ -176,6 +176,7 @@ async function fetchNationalCatalogues(): Promise<RemoteCatalogue[]> {
       title: meta.title,
       validFrom: meta.validFrom,
       validUntil: meta.validUntil,
+      sourceUrl: `${API_BASE}/catalogs/${encodeURIComponent(meta.externalId)}`,
       pageImageUrls: intermarchePageImageUrls(pages),
       items: intermarcheItemsFromPages(pages),
     });

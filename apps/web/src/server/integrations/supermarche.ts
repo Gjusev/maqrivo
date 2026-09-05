@@ -33,6 +33,7 @@ export interface SupermarcheCandidate {
 }
 
 const BRAND_TO_SLUG: Record<string, string> = {
+  auchan: "auchan",
   carrefour: "carrefour",
   intermarche: "intermarche",
   lidl: "lidl",

@@ -1,6 +1,6 @@
 /**
  * Global seed: retailers + curated FoodConcept catalog. Idempotent —
- * re-running updates nothing, inserts only what's missing (by slug).
+ * retailer metadata is refreshed while concepts are inserted only when missing.
  * Dev-user data is seeded separately in apps/web once auth exists (M3).
  */
 import { sql } from "drizzle-orm";
@@ -15,7 +15,15 @@ export async function seedGlobal(connectionString: string): Promise<void> {
   await db
     .insert(retailer)
     .values(RETAILERS.map((r) => ({ ...r, nameFr: r.nameFr ?? null, adapter: r.adapter ?? null })))
-    .onConflictDoNothing({ target: retailer.slug });
+    .onConflictDoUpdate({
+      target: retailer.slug,
+      set: {
+        name: sql`excluded.name`,
+        nameFr: sql`excluded.name_fr`,
+        kind: sql`excluded.kind`,
+        adapter: sql`excluded.adapter`,
+      },
+    });
 
   await db.insert(foodConcept).values(
     FOOD_CONCEPTS.map((c) => ({

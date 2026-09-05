@@ -25,9 +25,12 @@ The ingestion scheduler composes jobs **only** from declared capabilities — ca
 | `CarrefourAdapter` | ✅ verified public eligibility API | 🔬 experimental flag (documented no-login endpoints) | 🔬 via catalogue flag | ❌ (Cloudflare) — Open Prices + user observations instead | 🔬 GTIN-keyed (with catalogue flag) |
 | `IntermarcheAdapter` | ❌ (DataDome) — open data covers discovery | ✅ **structured** (EAN + prices per zone, no AI) — national; store-keyed needs PDV codes | ✅ same payload (LOYALTY_PRICE mapping) | ❌ | ✅ barcode-EXACT via tryMatchPromotionProduct |
 | `LidlAdapter` | ❌ — open data covers discovery | ✅ **structured** (prices, no EAN) — national flyers | ✅ same payload | ❌ | 🔬 name/brand scorer (no EAN in payload) |
+| `AuchanAdapter` | ✅ OSM + supermarche.com | ✅ official SSR HTML; structured zones + page fallback | ✅ multibuy/loyalty terms parsed conservatively | ❌ | 🔬 name scorer (CUI is not treated as EAN) |
+| `MonoprixAdapter` | ✅ OSM + supermarche.com | ✅ official public Dewib JSON, national grocery campaigns | ✅ EAN + effective/base/unit price + typed terms | ❌ | ✅ barcode-EXACT via tryMatchPromotionProduct |
+| `G20Adapter` | ✅ OSM + supermarche.com | ✅ official Spree SSR promotion listing | ✅ EAN + current/old/unit price + conditional terms | ❌ | ✅ barcode-EXACT via tryMatchPromotionProduct |
 | `BonialAdapter` | — | — | — | — | **Not built** — programmatic use rejected (CGU, robots); manual entry is the aggregator fallback |
 
-Key: ✅ slice · 🔬 behind config flag with hard backoff · ❌ not attempted.
+Key: ✅ live-verified · 🔬 best-effort deterministic matching · ❌ unavailable/excluded.
 
 ## Behavioural rules
 
@@ -39,4 +42,4 @@ Key: ✅ slice · 🔬 behind config flag with hard backoff · ❌ not attempted
 
 ## Adding a retailer (iteration protocol)
 
-Research (updated in `docs/data_sources.md`, live-verified endpoints) → implement adapter with real capabilities only → fixtures + parser tests → one supervised live run → inspect data quality in the admin view → only then mark supported. Next candidates in order: Auchan (SSR HTML zones), G20 (Spree, EAN-keyed), Monoprix (Nuxt payload resolver). Excluded by policy: E.Leclerc API (Akamai), Super U (Cloudflare), Franprix (bot wall), Bonial (CGU).
+Research (updated in `docs/data_sources.md`, live-verified endpoints) → implement adapter with real capabilities only → fixtures + parser tests → one supervised live parse/run → inspect data quality in the admin view → only then mark supported. Next candidates: Casino proximity brands through the Dewib adapter where prices are actually exposed; Lidl regional catalogues once a user's offer region is known; Intermarché local catalogues once stores carry PDV codes. Excluded by policy: E.Leclerc API (Akamai), Super U (Cloudflare), Franprix (bot wall), Bonial (CGU).

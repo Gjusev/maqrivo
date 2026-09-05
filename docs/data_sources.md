@@ -56,11 +56,13 @@ Detail and citations in `docs/research/french-retailers.md` (verified live 2026-
 
 - Schwarz Group leaflet platform, fully public (no auth, no key, CORS-open; live-verified, `apps/web/fixtures/lidl/`): `GET https://endpoints.leaflets.schwarz/v4/overview?client_locale=lidl/fr-FR` → national flyers with validity dates, then `flyerJson` URL per flyer → `flyer.products` with `{title, brand, price}`. Prices structured, **no EAN** — matching falls to the deterministic name/brand scorer. v1 national flyers only (regional `offer_region` variants later). First live run: 2 flyers, 105 promotions.
 
-### Other chains (re-verified 2026-09-05)
+### Additional structured catalogue adapters (shipped 2026-09-05)
 
-- **Auchan — viable (not yet built)**: server-rendered `/catalogue/{designation}?version=V1` embeds page images + product zones with prices in text; same Aristid platform as Intermarché (JSON path unverified — 401). HTML-parse adapter is the follow-up.
-- **Monoprix — viable with effort (not yet built)**: `catalogue.monoprix.fr` (robots-empty) SSR-embeds structured promotions (EAN + prices) in a Nuxt payload with minified-variable refs; Petit Casino/Spar/Vival share the same rcdss/Dewib platform (price display flag off for those brands). Needs a payload resolver.
-- **G20 — viable (not yet built)**: Spree Commerce at `g20-minute.com/taxons/promotions`, EAN-keyed cards with `data-qty-price` cents; small Paris chain.
+- **Auchan — official SSR HTML**: `GET https://www.auchan.fr/catalogue/` lists catalogue designations and Paris-local validity epochs; `/catalogue/{designation}?version=V1` embeds page images and `data-product-*` zones. The parser normalizes explicit multibuy/loyalty prices and deliberately rejects zones that expose only €/kg without a pack price. Live verification parsed 83 + 62 structured offers from the two best current food leaflets; a third image-only leaflet falls back to page evidence. The Aristid JSON path remains unused because its access status was inconclusive.
+- **Monoprix — official public JSON**: the catalogue app's anonymous Dewib endpoint `GET https://api.rcdss.monoprix.fr/rest/api/promotion/by_department` returns campaign ids, dates, EAN, base/effective prices, unit prices, package text, brand and typed promotion terms. The adapter requests only `epicerie-salee` and `epicerie-sucree`, 48 items each; live verification parsed 96 EAN-keyed grocery offers without evaluating the Nuxt payload. Petit Casino/Spar/Vival share the platform but price coverage is partial and remains deferred.
+- **G20 — official Spree SSR HTML**: `GET https://www.g20-minute.com/taxons/promotions` exposes product EANs, visible current/old prices, integer basket cents, €/kg, loyalty flags and promotion descriptions. Live verification parsed 21 EAN-keyed offers: 6 second-unit discounts, 11 loyalty credits and 4 direct percentage offers.
+
+### Excluded/deferred chains (re-verified 2026-09-05)
 - **E.Leclerc — excluded (API)**: viewer API `nos-catalogues-promos-v2-api.e.leclerc` returned 200 once then Akamai 403s — no-bypass policy excludes it. Listing HTML + manual consultation remain.
 - **Super U — excluded**: catalogue detail pages sit behind a Cloudflare JS challenge.
 - **Franprix — excluded**: robots.txt itself is bot-walled (403).

@@ -77,4 +77,4 @@ Structured JSON logs (pino). Ingestion status surface (`/admin/ingestion`) reads
 
 ## Known deferred (documented, not forgotten)
 
-Route optimization beyond geographic ordering; receipt ingestion; Open Prices write-back; price-trend analytics; additional retailer adapters beyond the first two; EU-provider alternative for AI.
+Route optimization beyond geographic ordering; Open Prices write-back (credential-gated and off by default); regional/store-local catalogue variants that require retailer location codes; Casino proximity-brand coverage where prices are exposed; EU-provider alternative for AI. Receipt ingestion and price-trend analytics have shipped.

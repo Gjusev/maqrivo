@@ -6,9 +6,20 @@ import {
   intermarchePageImageUrls,
 } from "../src/server/integrations/retailers/intermarche";
 import { lidlCatalogueFromFlyer, lidlNationalFlyers } from "../src/server/integrations/retailers/lidl";
+import {
+  auchanCatalogueFromHtml,
+  auchanCatalogueRefsFromHtml,
+  auchanOfferPrices,
+} from "../src/server/integrations/retailers/auchan";
+import { g20CatalogueFromHtml } from "../src/server/integrations/retailers/g20";
+import { monoprixCataloguesFromPayloads } from "../src/server/integrations/retailers/monoprix";
 
 function fixture(path: string): unknown {
   return JSON.parse(readFileSync(new URL(`../fixtures/${path}`, import.meta.url), "utf8"));
+}
+
+function textFixture(path: string): string {
+  return readFileSync(new URL(`../fixtures/${path}`, import.meta.url), "utf8");
 }
 
 describe("Intermarché pages → items (fixture)", () => {
@@ -89,5 +100,85 @@ describe("Lidl flyer → catalogue (fixture)", () => {
     expect(catalogue.validFrom).toBe("2026-08-27");
     expect(catalogue.validUntil).toBe("2026-09-09");
     expect(catalogue.pageImageUrls.length).toBeGreaterThan(0);
+  });
+});
+
+describe("G20 promotions HTML to catalogue (fixture)", () => {
+  const catalogue = g20CatalogueFromHtml(textFixture("g20/promotions.html"));
+
+  it("maps EAN cards and integer-cent basket prices", () => {
+    expect(catalogue.items).toHaveLength(2);
+    expect(catalogue.items[0]).toMatchObject({
+      ean: "5053990156009",
+      priceCents: 134,
+      regularPriceCents: 179,
+      pricePerKgCents: 1023,
+      packaging: "175g",
+      loyalty: true,
+      mechanism: "SECOND_UNIT_DISCOUNT",
+      minQty: 2,
+      discountPct: 50,
+    });
+    expect(catalogue.sourceUrl).toContain("g20-minute.com/taxons/promotions");
+  });
+});
+
+describe("Auchan SSR catalogue HTML (fixtures)", () => {
+  const refs = auchanCatalogueRefsFromHtml(textFixture("auchan/catalogues.html"));
+
+  it("prioritizes current grocery catalogues and maps Paris-local dates", () => {
+    expect(refs[0]).toMatchObject({
+      externalId: "food-AbCd",
+      title: "Les promos du moment",
+      validFrom: "2026-09-01",
+      validUntil: "2026-09-13",
+    });
+    expect(refs.at(-1)?.title).toBe("Electroshow");
+  });
+
+  it("normalizes multibuy prices and skips per-kg-only zones", () => {
+    const catalogue = auchanCatalogueFromHtml(refs[0]!, textFixture("auchan/catalogue-detail.html"));
+    expect(catalogue.pageImageUrls).toHaveLength(2);
+    expect(catalogue.items).toHaveLength(3);
+    expect(catalogue.items[0]).toMatchObject({
+      priceCents: 237,
+      regularPriceCents: 279,
+      pricePerKgCents: 790,
+      page: 1,
+    });
+    expect(catalogue.items[1]).toMatchObject({ priceCents: 112, regularPriceCents: 168 });
+    expect(catalogue.items[2]).toMatchObject({ priceCents: 1599, regularPriceCents: 1776, page: 2 });
+  });
+
+  it("does not present a per-kg amount as a pack price", () => {
+    expect(auchanOfferPrices("JAMBON", "315 g Soit le kg : 12€95")).toMatchObject({
+      priceCents: null,
+      regularPriceCents: null,
+      pricePerKgCents: 1295,
+    });
+  });
+});
+
+describe("Monoprix official JSON to catalogues (fixture)", () => {
+  const catalogues = monoprixCataloguesFromPayloads([fixture("monoprix/promotions.json")]);
+
+  it("groups campaign items with EAN, dates and effective promo prices", () => {
+    expect(catalogues).toHaveLength(1);
+    expect(catalogues[0]).toMatchObject({
+      validFrom: "2026-08-25",
+      validUntil: "2026-09-06",
+    });
+    expect(catalogues[0]!.items[0]).toMatchObject({
+      ean: "8076809523509",
+      priceCents: 112,
+      regularPriceCents: 159,
+      pricePerKgCents: 223,
+      brand: "BARILLA",
+      loyalty: false,
+    });
+    expect(catalogues[0]!.items[1]).toMatchObject({
+      pricePerKgCents: 250,
+      loyalty: true,
+    });
   });
 });

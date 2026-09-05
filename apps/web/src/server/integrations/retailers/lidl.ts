@@ -132,6 +132,7 @@ export function lidlCatalogueFromFlyer(payload: unknown): RemoteCatalogue {
     title: flyer.title ?? flyer.name ?? null,
     validFrom: isoDate(flyer.startDate),
     validUntil: isoDate(flyer.endDate),
+    sourceUrl: null,
     pageImageUrls: (flyer.pages ?? [])
       .filter((p) => p.number != null && p.image)
       .sort((a, b) => (a.number ?? 0) - (b.number ?? 0))
@@ -150,7 +151,7 @@ async function fetchNationalFlyers(): Promise<RemoteCatalogue[]> {
   const result: RemoteCatalogue[] = [];
   for (const ref of lidlNationalFlyers(overview).slice(0, MAX_FLYERS)) {
     const detail = await politeFetchJson<unknown>(ref.flyerJsonUrl, { source: SOURCE });
-    result.push(lidlCatalogueFromFlyer(detail));
+    result.push({ ...lidlCatalogueFromFlyer(detail), sourceUrl: ref.flyerJsonUrl });
   }
   return result;
 }

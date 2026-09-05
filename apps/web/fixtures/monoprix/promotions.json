@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "department": { "title": "Pâtes, Riz, Céréale", "slug": "pates-riz-cereale" },
+      "promotions": [
+        {
+          "promotionId": "252649560078-8076809523509",
+          "operation": "252649560078",
+          "discountPrice": "1,12",
+          "discountMeasureUnitPrice": "2,23",
+          "startDate": { "date": "25/08/2026" },
+          "endDate": { "date": "06/09/2026" },
+          "validityDate": "Disponible du 25 Août au 06 Septembre 2026",
+          "promotionType": [{ "fidelity": false, "name": "Le 2ème à moins 60%" }],
+          "product": {
+            "ean": "8076809523509",
+            "title": "Linguine La Collezione \"Barilla\"",
+            "shortDescription": "Le paquet de 500 g",
+            "priceBase": "1,59",
+            "measureUnit": "Le kg",
+            "brand": { "name": "BARILLA" },
+            "department": { "title": "Pâtes, Riz, Céréale" }
+          }
+        },
+        {
+          "promotionId": "252649560078-1234567890123",
+          "operation": "252649560078",
+          "discountPrice": "2,50",
+          "discountMeasureUnitPrice": "0,25",
+          "startDate": { "date": "25/08/2026" },
+          "endDate": { "date": "06/09/2026" },
+          "validityDate": "Disponible du 25 Août au 06 Septembre 2026",
+          "promotionType": [{ "fidelity": true, "name": "Prix fidélité" }],
+          "product": {
+            "ean": "1234567890123",
+            "title": "Biscuits test",
+            "shortDescription": "Le paquet",
+            "priceBase": "3,50",
+            "measureUnit": "les 100 g",
+            "brand": { "name": "TEST" },
+            "department": { "title": "Épicerie sucrée" }
+          }
+        }
+      ]
+    }
+  ],
+  "totalItems": 2
+}
