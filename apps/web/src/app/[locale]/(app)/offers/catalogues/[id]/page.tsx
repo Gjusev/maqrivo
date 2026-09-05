@@ -11,7 +11,7 @@ import { PageCard } from "./page-card";
 export default async function CatalogueDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const t = await getTranslations("Catalogues");
-  const te = await getTranslations("Offers");
+  const te = await getTranslations("Evidence");
   const locale = await getLocale();
   const session = await getSessionContext();
   if (!session) notFound();

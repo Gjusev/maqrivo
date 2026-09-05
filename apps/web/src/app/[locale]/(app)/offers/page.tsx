@@ -2,6 +2,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 import { listActivePromotions } from "@/server/ingestion/promotions";
+import { promotionDealAssessments, type PromotionDeal } from "@/server/prices/history";
 import { db } from "@/server/db";
 import { formatMoney, type PromotionMechanism } from "@maqrivo/core";
 import { PercentIcon } from "@phosphor-icons/react/dist/ssr/Percent";
@@ -16,6 +17,16 @@ export default async function OffersPage() {
   const te = await getTranslations("Evidence");
   const locale = await getLocale();
   const promotions = await listActivePromotions();
+  // Deal quality vs observed history — only for promotions with a directly
+  // comparable price on a matched product; the rest stay unlabelled.
+  const deals = await promotionDealAssessments(
+    promotions.map(({ promotion: promo }) => ({
+      id: promo.id,
+      storeId: promo.storeId,
+      promoPriceCents: promo.promoPriceCents,
+      pricePerKgCents: promo.pricePerKgCents,
+    })),
+  );
   const tc2 = await getTranslations("Catalogues");
   const catalogues = await db
     .select({ cat: catalogue, retailerName: retailer.name })
@@ -61,52 +72,85 @@ export default async function OffersPage() {
         <EmptyState icon={PercentIcon} title={t("noOffers")} action={<NewPromotionButton variant="primary" />} />
       ) : (
         <ul className="space-y-2">
-          {promotions.map(({ promotion: promo, retailerName, storeName }) => (
-            <li key={promo.id} className="card p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-medium text-zinc-900">{promo.descriptionRaw}</p>
-                  <p className="mt-0.5 text-xs text-zinc-500">
-                    {[retailerName, storeName ?? t("allStores"), promo.brand].filter(Boolean).join(" · ")}
-                  </p>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                    {promo.validUntil ? (
-                      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">
-                        {t("validUntil", { date: new Date(promo.validUntil).toLocaleDateString(locale) })}
-                      </span>
-                    ) : (
-                      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-500">{t("noDates")}</span>
-                    )}
-                    {promo.loyaltyRequired ? (
-                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700">
-                        {t("loyaltyRequired")}
-                      </span>
+          {promotions.map(({ promotion: promo, retailerName, storeName }) => {
+            const deal = deals.get(promo.id);
+            return (
+              <li key={promo.id} className="card p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-medium text-zinc-900">{promo.descriptionRaw}</p>
+                    <p className="mt-0.5 text-xs text-zinc-500">
+                      {[retailerName, storeName ?? t("allStores"), promo.brand].filter(Boolean).join(" · ")}
+                    </p>
+                    {deal ? (
+                      <Link
+                        href={`/products/${deal.productId}`}
+                        className="mt-0.5 inline-block truncate text-xs font-medium text-brand-700 hover:underline"
+                      >
+                        {deal.productName}
+                      </Link>
                     ) : null}
-                    <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-500">
-                      {promo.source === "user" ? te("userObserved") : te("extracted")}
-                    </span>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                      {promo.validUntil ? (
+                        <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">
+                          {t("validUntil", { date: new Date(promo.validUntil).toLocaleDateString(locale) })}
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-500">{t("noDates")}</span>
+                      )}
+                      {promo.loyaltyRequired ? (
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700">
+                          {t("loyaltyRequired")}
+                        </span>
+                      ) : null}
+                      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-500">
+                        {promo.source === "user" ? te("userObserved") : te("extracted")}
+                      </span>
+                      {deal ? <DealBadge deal={deal} /> : null}
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    {promo.promoPriceCents != null ? (
+                      <p className="text-lg font-bold text-brand-700">
+                        {formatMoney({ amountCents: promo.promoPriceCents, currency: "EUR" }, locale)}
+                      </p>
+                    ) : null}
+                    {promo.regularPriceCents != null ? (
+                      <p className="text-xs text-zinc-400 line-through">
+                        {formatMoney({ amountCents: promo.regularPriceCents, currency: "EUR" }, locale)}
+                      </p>
+                    ) : null}
+                    <MechanismLabel mechanism={promo.mechanism} payQty={promo.minQty} getQty={promo.getQty} discountPct={promo.discountPct} />
                   </div>
                 </div>
-                <div className="shrink-0 text-right">
-                  {promo.promoPriceCents != null ? (
-                    <p className="text-lg font-bold text-brand-700">
-                      {formatMoney({ amountCents: promo.promoPriceCents, currency: "EUR" }, locale)}
-                    </p>
-                  ) : null}
-                  {promo.regularPriceCents != null ? (
-                    <p className="text-xs text-zinc-400 line-through">
-                      {formatMoney({ amountCents: promo.regularPriceCents, currency: "EUR" }, locale)}
-                    </p>
-                  ) : null}
-                  <MechanismLabel mechanism={promo.mechanism} payQty={promo.minQty} getQty={promo.getQty} discountPct={promo.discountPct} />
-                </div>
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
     </>
   );
+
+  /** Quality of the promo price vs observed history — hidden when the data is too thin. */
+  function DealBadge({ deal }: { deal: PromotionDeal }) {
+    const quality = deal.assessment.quality;
+    const labels: Record<string, { text: string; className: string }> = {
+      GOOD_DEAL: { text: t("dealGood"), className: "bg-brand-100 text-brand-800" },
+      TYPICAL: { text: t("dealTypical"), className: "bg-zinc-100 text-zinc-600" },
+      STABLE: { text: t("dealStable"), className: "bg-zinc-100 text-zinc-500" },
+      PRICEY: { text: t("dealPricey"), className: "bg-amber-100 text-amber-700" },
+    };
+    const label = labels[quality];
+    if (!label) return null; // NO_HISTORY / INSUFFICIENT: silence, not noise
+    return (
+      <span
+        className={`rounded-full px-2 py-0.5 text-xs font-medium ${label.className}`}
+        title={t("dealVsHistory", { count: deal.assessment.sampleSize })}
+      >
+        {label.text}
+      </span>
+    );
+  }
 
   function MechanismLabel(m: { mechanism: string; payQty: number | null; getQty: number | null; discountPct: number | null }) {
     const labels: Record<string, string> = {

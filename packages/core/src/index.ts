@@ -10,6 +10,7 @@ export * from "./promotions/types";
 export * from "./promotions/evaluate";
 
 export * from "./freshness/policies";
+export * from "./prices/history";
 export * from "./matching/normalize";
 export * from "./matching/resolve";
 

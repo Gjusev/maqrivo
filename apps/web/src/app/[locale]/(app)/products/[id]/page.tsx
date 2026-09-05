@@ -4,9 +4,9 @@ import { eq } from "drizzle-orm";
 import { db } from "@/server/db";
 import { foodConcept, product, productNutrition } from "@maqrivo/db";
 import { getSessionContext } from "@/server/session";
-import { currentPricesForProduct } from "@/server/products/actions";
+import { priceHistoryForProduct } from "@/server/prices/history";
 import { computeValueMetrics, formatMoney, freshnessOf } from "@maqrivo/core";
-import { PriceList } from "./price-list";
+import { PriceHistorySection } from "./price-history";
 import { AddPriceForm } from "./add-price-form";
 import { ConceptLinker } from "./concept-linker";
 
@@ -33,22 +33,22 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
   const p = rows.product;
   const n = rows.nutrition;
-  const observations = await currentPricesForProduct(p.id);
+  const history = await priceHistoryForProduct(p.id);
   const now = new Date();
 
   // Deterministic metrics on the freshest observation with known nutrition.
   // Product nutrition wins; concept nutrition is the honest fallback.
   // Per-kg observations convert to a pack-equivalent price for the metric.
-  const best = observations[0];
+  const best = history.freshest?.obs ?? null;
   const packGrams = p.packageQuantity !== null && p.packageUnit === "g" ? Number(p.packageQuantity) : null;
   const proteinPer100 = n?.proteinG != null ? Number(n.proteinG) : rows.concept?.proteinG != null ? Number(rows.concept.proteinG) : null;
   const kcalPer100 = n?.energyKcal ?? rows.concept?.energyKcal ?? null;
   // WEIGHT products: a per-kg observation is its own 1000 g basis.
   const metricBasis =
-    packGrams != null && (best?.obs.priceBasis === "unit" || best?.obs.priceBasis === "per_kg")
-      ? { grams: packGrams, priceCents: best.obs.priceBasis === "unit" ? best.obs.amountCents : Math.round((best.obs.amountCents * packGrams) / 1000) }
-      : p.purchasingMode === "WEIGHT" && best?.obs.priceBasis === "per_kg"
-        ? { grams: 1000, priceCents: best.obs.amountCents }
+    packGrams != null && (best?.priceBasis === "unit" || best?.priceBasis === "per_kg")
+      ? { grams: packGrams, priceCents: best.priceBasis === "unit" ? best.amountCents : Math.round((best.amountCents * packGrams) / 1000) }
+      : p.purchasingMode === "WEIGHT" && best?.priceBasis === "per_kg"
+        ? { grams: 1000, priceCents: best.amountCents }
         : null;
   const metrics =
     best && proteinPer100 != null && metricBasis
@@ -57,7 +57,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           energyKcalPer100: kcalPer100,
           priceCents: metricBasis.priceCents,
           quantityBase: metricBasis.grams,
-          freshness: freshnessOf(best.obs.observedAt, best.obs.source, now),
+          freshness: freshnessOf(best.observedAt, best.source, now),
         })
       : null;
 
@@ -121,27 +121,16 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               </p>
             ) : null}
           </section>
-        ) : observations.length > 0 ? (
+        ) : history.freshest !== null ? (
           <p className="text-xs text-zinc-400">{t("metricUnavailable")}</p>
         ) : null}
 
         <section>
           <h2 className="mb-2 text-sm font-semibold text-zinc-900">{t("priceHistory")}</h2>
-          {observations.length === 0 ? (
+          {history.groups.length === 0 ? (
             <p className="text-sm text-zinc-500">{tf("unknown")}</p>
           ) : (
-            <PriceList
-              observations={observations.map((o) => ({
-                id: o.obs.id,
-                storeName: o.storeName,
-                amountCents: o.obs.amountCents,
-                priceBasis: o.obs.priceBasis,
-                discounted: o.obs.discounted,
-                regularAmountCents: o.obs.regularAmountCents,
-                observedAt: o.obs.observedAt.toISOString(),
-                source: o.obs.source,
-              }))}
-            />
+            <PriceHistorySection groups={history.groups} />
           )}
         </section>
 

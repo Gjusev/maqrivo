@@ -87,7 +87,8 @@ export async function createManualPromotion(input: unknown): Promise<{ ok: boole
   return { ok: true };
 }
 
-async function tryMatchPromotionProduct(
+/** Deterministic product matching for a promotion — shared by manual and catalogue flows. */
+export async function tryMatchPromotionProduct(
   promotionId: string,
   barcode: string | null,
   brand: string | null,

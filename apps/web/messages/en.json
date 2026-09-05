@@ -181,7 +181,12 @@
     "storeOptional": "Store (optional)",
     "savePromo": "Save offer",
     "promoSaved": "Offer saved",
-    "brandLabel": "Brand"
+    "brandLabel": "Brand",
+    "dealGood": "Good deal",
+    "dealTypical": "Typical price",
+    "dealStable": "Stable price",
+    "dealPricey": "Above usual prices",
+    "dealVsHistory": "vs {count, plural, =1 {# observed price} other {# observed prices}}"
   },
   "Pantry": {
     "title": "Pantry",
@@ -309,7 +314,15 @@
     "changeConcept": "Change generic food",
     "searchConcept": "Search a food…",
     "noConcept": "None (unlinked)",
-    "nameLabel": "Product name"
+    "nameLabel": "Product name",
+    "lowestPrice": "Lowest",
+    "averagePrice": "Average",
+    "observationsCount": "{count, plural, =1 {# observation} other {# observations}}",
+    "trendUp": "Rising",
+    "trendDown": "Falling",
+    "trendFlat": "Stable",
+    "cheaperThanSeen": "Cheaper than {pct} % of prices seen here",
+    "pricierThanSeen": "More expensive than {pct} % of prices seen here"
   },
   "Recipes": {
     "title": "Recipes",

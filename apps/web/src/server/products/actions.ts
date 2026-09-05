@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, desc, eq, isNull, or } from "drizzle-orm";
+import { and, eq, isNull, or } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../db";
 import {
@@ -9,7 +9,6 @@ import {
   priceObservation,
   product,
   productNutrition,
-  store,
 } from "@maqrivo/db";
 import { getSessionContext } from "../session";
 import { fetchOffProductV3 } from "../integrations/openfoodfacts";
@@ -19,23 +18,6 @@ export interface ActionResult<T = undefined> {
   ok: boolean;
   error?: string;
   data?: T;
-}
-
-/** Latest observation per (product, store) — the "current price" query. */
-export async function currentPricesForProduct(productId: string) {
-  const observations = await db
-    .select({ obs: priceObservation, storeName: store.name, storeId: store.id })
-    .from(priceObservation)
-    .innerJoin(store, eq(priceObservation.storeId, store.id))
-    .where(eq(priceObservation.productId, productId))
-    .orderBy(desc(priceObservation.observedAt));
-  const seen = new Set<string>();
-  return observations.filter((row) => {
-    const key = row.obs.storeId;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
 }
 
 const manualProductSchema = z.object({

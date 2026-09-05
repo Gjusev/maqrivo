@@ -9,7 +9,6 @@ import {
   catalogue,
   cataloguePage,
   promotion,
-  promotionProductMatch,
   retailer,
   shoppingItem,
   shoppingPlan,
@@ -20,6 +19,7 @@ import {
 import { getSessionContext } from "../session";
 import { getAIProvider } from "../ai/provider";
 import { readImage } from "../storage";
+import { tryMatchPromotionProduct } from "../ingestion/promotions";
 import { candidatesFromExtraction, type CatalogueCandidate } from "./extraction";
 
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
@@ -199,10 +199,9 @@ export async function confirmCandidateAction(input: unknown): Promise<{ ok: bool
       .returning()
   )[0]!;
 
-  await db
-    .insert(promotionProductMatch)
-    .values({ promotionId: inserted.id, productId: null, state: "UNRESOLVED", matchedBy: "none", decidedBy: "rule" })
-    .onConflictDoNothing();
+  // Deterministic product match on the confirmed description — same rule
+  // path as manual promotions. UNRESOLVED is a valid outcome.
+  await tryMatchPromotionProduct(inserted.id, null, d.brand ?? null, d.description);
 
   revalidatePath("/offers");
   revalidatePath(`/offers/catalogues/${d.catalogueId}`);

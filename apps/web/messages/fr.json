@@ -181,7 +181,12 @@
     "storeOptional": "Magasin (facultatif)",
     "savePromo": "Enregistrer la promo",
     "promoSaved": "Promo enregistrée",
-    "brandLabel": "Marque"
+    "brandLabel": "Marque",
+    "dealGood": "Bon plan",
+    "dealTypical": "Prix habituel",
+    "dealStable": "Prix stable",
+    "dealPricey": "Au-dessus de l'habituel",
+    "dealVsHistory": "vs {count, plural, =1 {# prix observé} other {# prix observés}}"
   },
   "Pantry": {
     "title": "Garde-manger",
@@ -309,7 +314,15 @@
     "changeConcept": "Changer l'aliment générique",
     "searchConcept": "Rechercher un aliment…",
     "noConcept": "Aucun (non lié)",
-    "nameLabel": "Nom du produit"
+    "nameLabel": "Nom du produit",
+    "lowestPrice": "Plus bas",
+    "averagePrice": "Prix moyen",
+    "observationsCount": "{count, plural, =1 {# observation} other {# observations}}",
+    "trendUp": "En hausse",
+    "trendDown": "En baisse",
+    "trendFlat": "Stable",
+    "cheaperThanSeen": "Moins cher que {pct} % des prix vus ici",
+    "pricierThanSeen": "Plus cher que {pct} % des prix vus ici"
   },
   "Recipes": {
     "title": "Recettes",
