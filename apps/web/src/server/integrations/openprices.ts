@@ -8,32 +8,46 @@ import { politeFetchJson } from "./http";
 
 const OPENPRICES = "https://prices.openfoodfacts.org/api/v1";
 
-const nearbyLocation = z.object({
-  location_id: z.number(),
-  osm_node_id: z.number().optional(),
-  osm_way_id: z.number().optional(),
-  name: z.string().optional(),
-});
+const nearbyLocation = z
+  .object({
+    // Current API fields.
+    id: z.number().optional(),
+    osm_id: z.number().nullable().optional(),
+    osm_type: z.enum(["NODE", "WAY", "RELATION"]).nullable().optional(),
+    osm_name: z.string().nullable().optional(),
+    // Legacy fields retained during the API transition.
+    location_id: z.number().optional(),
+    osm_node_id: z.number().optional(),
+    osm_way_id: z.number().optional(),
+    osm_relation_id: z.number().optional(),
+    name: z.string().optional(),
+  })
+  .loose();
 
 export const nearbyResponse = z.object({ items: z.array(nearbyLocation).optional() });
 
-const priceItem = z.object({
-  price_id: z.number(),
-  product_id: z.string().optional().nullable(),
-  price: z.number(),
-  currency: z.string().optional(),
-  date: z.string().optional(),
-  price_is_discounted: z.boolean().optional(),
-  price_without_discount: z.number().nullable().optional(),
-  location_id: z.number(),
-  owner: z.string().optional(),
-});
+const priceItem = z
+  .object({
+    id: z.number().optional(),
+    price_id: z.number().optional(),
+    product_code: z.string().optional().nullable(),
+    product_id: z.union([z.string(), z.number()]).optional().nullable(),
+    price: z.number(),
+    currency: z.string().nullable().optional(),
+    date: z.string().nullable().optional(),
+    price_is_discounted: z.boolean().optional(),
+    price_without_discount: z.number().nullable().optional(),
+    location_id: z.number().optional(),
+    owner: z.string().nullable().optional(),
+  })
+  .loose();
 
 export const pricesResponse = z.object({ items: z.array(priceItem).optional(), count: z.number().optional() });
 
 export interface OpenPricesStoreMatch {
   locationId: number;
-  osmNodeId: number | null;
+  osmId: number | null;
+  osmType: "NODE" | "WAY" | "RELATION" | null;
   name: string | null;
 }
 
@@ -45,11 +59,23 @@ export async function findOpenPricesLocations(
   const json = await politeFetchJson<unknown>(url, { source: "openprices" });
   const parsed = nearbyResponse.safeParse(json);
   if (!parsed.success) return [];
-  return (parsed.data.items ?? []).map((l) => ({
-    locationId: l.location_id,
-    osmNodeId: l.osm_node_id ?? null,
-    name: l.name ?? null,
-  }));
+  return (parsed.data.items ?? []).flatMap((location) => {
+    const locationId = location.id ?? location.location_id;
+    if (locationId === undefined) return [];
+    const legacyReference = location.osm_node_id !== undefined
+      ? { osmId: location.osm_node_id, osmType: "NODE" as const }
+      : location.osm_way_id !== undefined
+        ? { osmId: location.osm_way_id, osmType: "WAY" as const }
+        : location.osm_relation_id !== undefined
+          ? { osmId: location.osm_relation_id, osmType: "RELATION" as const }
+          : { osmId: null, osmType: null };
+    return [{
+      locationId,
+      osmId: location.osm_id ?? legacyReference.osmId,
+      osmType: location.osm_type ?? legacyReference.osmType,
+      name: location.osm_name ?? location.name ?? null,
+    }];
+  });
 }
 
 export interface OpenPricesPrice {
@@ -67,15 +93,22 @@ export async function fetchOpenPricesAtLocation(locationId: number, page = 1): P
   const json = await politeFetchJson<unknown>(url, { source: "openprices" });
   const parsed = pricesResponse.safeParse(json);
   if (!parsed.success) return [];
-  return (parsed.data.items ?? [])
-    .filter((p) => p.product_id && p.price > 0)
-    .map((p) => ({
-      priceId: p.price_id,
-      productId: String(p.product_id),
-      amountCents: Math.round(p.price * 100),
-      currency: p.currency ?? "EUR",
-      date: p.date ?? null,
-      discounted: p.price_is_discounted ?? false,
-      regularAmountCents: p.price_without_discount != null ? Math.round(p.price_without_discount * 100) : null,
-    }));
+  return (parsed.data.items ?? []).flatMap((price) => {
+      const priceId = price.id ?? price.price_id;
+      const productId = price.product_code ??
+        (typeof price.product_id === "string" ? price.product_id : null);
+      if (priceId === undefined || !productId || price.price <= 0) return [];
+      return [{
+      priceId,
+      productId,
+      amountCents: Math.round(price.price * 100),
+      currency: price.currency ?? "EUR",
+      date: price.date ?? null,
+      discounted: price.price_is_discounted ?? false,
+      regularAmountCents:
+        price.price_without_discount != null
+          ? Math.round(price.price_without_discount * 100)
+          : null,
+    }];
+  });
 }

@@ -5,6 +5,7 @@
  */
 import { z } from "zod";
 import { IntegrationError, politeFetchJson } from "../http";
+import { osmExternalIds } from "./reference";
 
 const overpassElement = z.object({
   type: z.enum(["node", "way", "relation"]),
@@ -111,7 +112,7 @@ export async function discoverStoresOverpass(
       lng,
       address: addressParts.length > 0 ? addressParts.join(" ") : null,
       openingHours: tags["opening_hours"] ? { osm: tags["opening_hours"] } : null,
-      externalIds: { osm_node: String(el.id) },
+      externalIds: osmExternalIds(el.type, el.id),
       source: "osm",
       tags: tagsToList(tags),
     });

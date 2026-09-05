@@ -19,7 +19,7 @@ Consolidated from `docs/research/*` (all claims cited there; fetched 2026-09-04)
 - **Purpose**: price observations with store, product, date, proof photos; discount fields.
 - **Official** Open Food Facts ecosystem project; ODbL; anonymous reads; France is the top-covered country (~207 k of ~307 k prices; ~2 440 stores). Verified live: 2 km around La Défense → 8 stores, 202 prices.
 - **Integration**: REST `https://api.openfoodfacts.org/api/v1` (OpenAPI published): `locations/nearby?lat&lon&radius_km`, `prices?lat&lon&radius_km`, filters by store/location/product; fields include `price_is_discounted`, `discount_type`, `price_without_discount` → feeds the promotion pipeline as discount observations. Pagination: page size ≤ 100.
-- **Freshness**: per-observation dates; treat as opportunistic — density per store is uneven (most local stores have 1–6 prices). Explicit "observed N days ago" always; write-back deferred post-MVP.
+- **Freshness**: per-observation dates; treat as opportunistic — density per store is uneven (most local stores have 1–6 prices). Explicit "observed N days ago" always. Credential-gated receipt write-back is implemented but off by default.
 - **Fallback**: user manual price observations (first-class, evidence-attached).
 
 ## Store discovery — OSM Overpass + directory fallbacks
@@ -67,9 +67,11 @@ Detail and citations in `docs/research/french-retailers.md` (verified live 2026-
 - **Super U — excluded**: catalogue detail pages sit behind a Cloudflare JS challenge.
 - **Franprix — excluded**: robots.txt itself is bot-walled (403).
 
-### Open Prices — write-back (verified 2026-09-05, not yet wired)
+### Open Prices — write-back (implemented 2026-09-05; credential verification pending)
 
-`https://prices.openfoodfacts.org/api/v1` (pre-prod `prices.openfoodfacts.net`, separate token): `POST /auth` (username/password form) → Bearer token; `POST /proofs/upload` (multipart, `type` ∈ PRICE_TAG/RECEIPT/…, returns proof id); `POST /prices` requiring `proof_id` + (`product_code` XOR `category_tag`) + `price`, `price_per`, `currency`, `date`, location (OSM id/type or location id), optional discount fields, `source: maqrivo`. ODbL — attribution + share-back. Implementation awaits the user's OFF credentials (off by default), then: receipt confirmations push as type RECEIPT proofs.
+Current official schema re-verified before implementation: `POST /auth` (username/password form) → Bearer token; `POST /proofs/upload` (multipart `RECEIPT` proof with date, currency and OSM location); `POST /prices` with `proof_id`, EAN `product_code`, exact price basis (`UNIT`/`KILOGRAM`), receipt quantity, date, currency and the same location. Attribution is passed through the official `app_name`/`app_version` query fields. Maqrivo stores the returned proof id on the private evidence payload and the returned price id on the local observation, so subsequent actions do not republish it. Writes are single-attempt, never retried after ambiguous failures, and local receipt confirmation succeeds independently.
+
+The feature is **off by default** (`OPENPRICES_WRITE_ENABLED=false`), accepts only the official production/pre-production API hosts, and defaults to pre-production as Open Prices recommends. It requires server-only `OPENPRICES_USERNAME`/`OPENPRICES_PASSWORD`; no credentials are stored in the database or exposed to the browser. Eligibility is conservative: receipt photo present, product with EAN, and store with an OSM node id. The current API also offers short-lived draft proofs plus a bounding-box anonymization endpoint; Maqrivo does not claim automatic anonymization and therefore requires the operator to enable external receipt sharing explicitly.
 
 ### Principles (all adapters)
 

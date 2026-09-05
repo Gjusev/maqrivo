@@ -9,6 +9,7 @@ import { distanceMeters, snapToGrid } from "@maqrivo/core";
 import { db } from "../db";
 import { ingestionRun, retailer, store, userStorePrefs, usersProfile } from "@maqrivo/db";
 import { discoverStoresOverpass, type DiscoveredStoreCandidate } from "../integrations/osm/overpass";
+import { osmReferenceFromExternalIds, osmReferenceKey } from "../integrations/osm/reference";
 import { discoverStoresSupermarche } from "../integrations/supermarche";
 import { bannerToFormat, fetchCarrefourStores } from "../integrations/retailers/carrefour";
 import { reverseGeocode } from "../integrations/osm/photon";
@@ -112,7 +113,8 @@ export async function runStoreDiscovery(userId: string): Promise<DiscoveryResult
 
       const existingRow = existing.find(
         (s) =>
-          (externalIds.osm_node && s.externalIds?.osm_node === externalIds.osm_node) ||
+          (osmReferenceKey(externalIds) !== null &&
+            osmReferenceKey(s.externalIds) === osmReferenceKey(externalIds)) ||
           (externalIds.supermarche && s.externalIds?.supermarche === externalIds.supermarche) ||
           (s.retailerId !== null &&
             s.retailerId === retailerId &&
@@ -121,9 +123,23 @@ export async function runStoreDiscovery(userId: string): Promise<DiscoveryResult
       );
 
       if (existingRow) {
+        // Older builds labelled every Overpass element as osm_node. When a
+        // fresh typed reference arrives, replace any stale OSM key instead of
+        // retaining two contradictory identities on the same store.
+        const retainedExternalIds = osmReferenceFromExternalIds(externalIds)
+          ? Object.fromEntries(
+              Object.entries(existingRow.externalIds ?? {}).filter(
+                ([key]) => !["osm_node", "osm_way", "osm_relation"].includes(key),
+              ),
+            )
+          : (existingRow.externalIds ?? {});
         await db
           .update(store)
-          .set({ lastVerifiedAt: new Date(), externalIds: { ...(existingRow.externalIds ?? {}), ...externalIds }, updatedAt: new Date() })
+          .set({
+            lastVerifiedAt: new Date(),
+            externalIds: { ...retainedExternalIds, ...externalIds },
+            updatedAt: new Date(),
+          })
           .where(eq(store.id, existingRow.id));
         updated += 1;
       } else {
@@ -237,7 +253,8 @@ function dedupe(candidates: (DiscoveredStoreCandidate & { origin: "osm" | "super
   const out: DedupedCandidate[] = [];
 
   for (const c of candidates) {
-    const extKey = c.externalIds.osm_node ? `osm:${c.externalIds.osm_node}` : c.externalIds.supermarche ? `sm:${c.externalIds.supermarche}` : null;
+    const osmKey = osmReferenceKey(c.externalIds);
+    const extKey = osmKey ? `osm:${osmKey}` : c.externalIds.supermarche ? `sm:${c.externalIds.supermarche}` : null;
     if (extKey) {
       const prior = byExternal.get(extKey);
       if (prior) {

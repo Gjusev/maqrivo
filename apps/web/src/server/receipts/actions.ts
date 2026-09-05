@@ -20,6 +20,7 @@ import { readImage } from "../storage";
 import { receiptLinesFromExtraction, type ReceiptLineCandidate } from "./extraction";
 import { resolveProduct, type ProductCandidate } from "@maqrivo/core";
 import { addPantryItemAction } from "../recipes/actions";
+import { writeReceiptLineToOpenPrices, type OpenPricesWritebackResult } from "./openprices-writeback";
 
 export interface ReceiptLineView {
   id: string;
@@ -150,7 +151,7 @@ export async function extractReceiptAction(receiptId: string): Promise<{
 export async function confirmReceiptLineAction(
   lineId: string,
   productIdOverride?: string | null,
-): Promise<{ ok: boolean; error?: string }> {
+): Promise<{ ok: boolean; error?: string; writeback?: OpenPricesWritebackResult["status"] }> {
   const session = await getSessionContext();
   if (!session) return { ok: false, error: "unauthorized" };
 
@@ -172,6 +173,7 @@ export async function confirmReceiptLineAction(
   const existing = line.priceObservationId
     ? (await db.select().from(priceObservation).where(eq(priceObservation.id, line.priceObservationId)).limit(1))[0]
     : undefined;
+  let createdObservationId: string | null = null;
   if (existing) {
     await db.update(priceObservation).set({ productId }).where(eq(priceObservation.id, existing.id));
   } else {
@@ -193,6 +195,7 @@ export async function confirmReceiptLineAction(
         })
         .returning()
     )[0]!;
+    createdObservationId = inserted.id;
     await db
       .update(receiptLine)
       .set({ confirmed: true, productId, priceObservationId: inserted.id })
@@ -202,9 +205,19 @@ export async function confirmReceiptLineAction(
   // Refresh the receipt total from confirmed lines (honest bookkeeping).
   await refreshReceiptTotal(parent.id);
 
+  // External contribution is optional and deliberately follows the local
+  // commit. A timeout or rejected proof never rolls back the user's receipt.
+  const writeback = createdObservationId
+    ? await writeReceiptLineToOpenPrices({
+        receiptId: parent.id,
+        lineId,
+        priceObservationId: createdObservationId,
+      })
+    : undefined;
+
   revalidatePath(`/shopping/receipts/${parent.id}`);
   revalidatePath("/shopping");
-  return { ok: true };
+  return { ok: true, ...(writeback ? { writeback: writeback.status } : {}) };
 }
 
 async function refreshReceiptTotal(receiptId: string): Promise<void> {
@@ -299,4 +312,3 @@ export async function deleteReceiptAction(receiptId: string): Promise<{ ok: bool
   revalidatePath("/shopping/receipts");
   return { ok: true };
 }
-

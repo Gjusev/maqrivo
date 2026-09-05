@@ -15,7 +15,7 @@ export class IntegrationError extends Error {
   }
 }
 
-const APP_UA = `Maqrivo/0.1 (+https://maqrivo.local; contact via OFF_USER_AGENT_EMAIL)`;
+export const APP_USER_AGENT = `Maqrivo/0.1 (+https://maqrivo.local; contact via OFF_USER_AGENT_EMAIL)`;
 
 interface PoliteFetchOptions {
   source: string;
@@ -37,7 +37,7 @@ export async function politeFetchJson<T>(
     try {
       const res = await fetch(url, {
         signal: controller.signal,
-        headers: { "User-Agent": APP_UA, accept, ...headers },
+        headers: { "User-Agent": APP_USER_AGENT, accept, ...headers },
       });
       clearTimeout(timer);
       if (res.status === 429 || res.status >= 500) {
@@ -86,7 +86,7 @@ export async function politeFetchText(
     try {
       const res = await fetch(url, {
         signal: controller.signal,
-        headers: { "User-Agent": APP_UA, accept, ...headers },
+        headers: { "User-Agent": APP_USER_AGENT, accept, ...headers },
       });
       clearTimeout(timer);
       if (res.status === 429 || res.status >= 500) {
@@ -138,7 +138,7 @@ export async function politeFetchImage(
     try {
       const res = await fetch(url, {
         signal: controller.signal,
-        headers: { "User-Agent": APP_UA, accept: "image/*", ...headers },
+        headers: { "User-Agent": APP_USER_AGENT, accept: "image/*", ...headers },
       });
       clearTimeout(timer);
       if (res.status === 429 || res.status >= 500) {

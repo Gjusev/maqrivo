@@ -9,6 +9,7 @@ import { db } from "../db";
 import { ingestionRun, priceObservation, product, store, userStorePrefs } from "@maqrivo/db";
 import { fetchOpenPricesAtLocation, findOpenPricesLocations } from "../integrations/openprices";
 import { snapToGrid } from "@maqrivo/core";
+import { osmReferenceFromExternalIds } from "../integrations/osm/reference";
 
 export interface SyncResult {
   storesConsidered: number;
@@ -38,13 +39,15 @@ export async function runOpenPricesSync(): Promise<SyncResult> {
   };
 
   try {
-    // Enabled stores that came from OSM (carry osm_node).
+    // Enabled stores carrying a correctly typed OSM node/way/relation id.
     const enabled = await db
       .select({ store: store })
       .from(userStorePrefs)
       .innerJoin(store, eq(userStorePrefs.storeId, store.id))
       .where(eq(userStorePrefs.enabled, true));
-    const osmStores = enabled.map((e) => e.store).filter((s) => s.externalIds?.osm_node);
+    const osmStores = enabled
+      .map((entry) => entry.store)
+      .filter((candidate) => osmReferenceFromExternalIds(candidate.externalIds) !== null);
 
     result.storesConsidered = osmStores.length;
     if (osmStores.length === 0) {
@@ -54,7 +57,7 @@ export async function runOpenPricesSync(): Promise<SyncResult> {
 
     // Location index: one nearby query per ~1.5 km cell around the first store.
     const seenCells = new Set<string>();
-    const locationByOsm = new Map<number, number>();
+    const locationByOsm = new Map<string, number>();
     for (const s of osmStores) {
       const center = snapToGrid({ lat: s.lat, lng: s.lng }, 1500);
       const cellKey = `${center.lat.toFixed(3)},${center.lng.toFixed(3)}`;
@@ -63,7 +66,9 @@ export async function runOpenPricesSync(): Promise<SyncResult> {
         try {
           const locations = await findOpenPricesLocations(center, 2);
           for (const loc of locations) {
-            if (loc.osmNodeId != null) locationByOsm.set(loc.osmNodeId, loc.locationId);
+            if (loc.osmId != null && loc.osmType) {
+              locationByOsm.set(`${loc.osmType}:${String(loc.osmId)}`, loc.locationId);
+            }
           }
         } catch (err) {
           warnings.push(`locations/nearby ${cellKey}: ${err instanceof Error ? err.message : "failed"}`);
@@ -72,8 +77,9 @@ export async function runOpenPricesSync(): Promise<SyncResult> {
     }
 
     for (const s of osmStores) {
-      const osmNode = Number(s.externalIds?.osm_node);
-      const locationId = locationByOsm.get(osmNode);
+      const osmReference = osmReferenceFromExternalIds(s.externalIds);
+      if (!osmReference) continue;
+      const locationId = locationByOsm.get(`${osmReference.type}:${String(osmReference.id)}`);
       if (!locationId) continue;
       result.storesMatched += 1;
 
