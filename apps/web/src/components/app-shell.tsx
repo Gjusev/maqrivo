@@ -97,8 +97,8 @@ function MoreSheet({ open, onClose, onSignOut }: { open: boolean; onClose: () =>
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label={t("more")}>
-      <button type="button" aria-label={t("closeMenu")} className="absolute inset-0 bg-zinc-900/40" onClick={onClose} />
-      <div className="absolute inset-x-0 bottom-0 rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)] shadow-xl">
+      <button type="button" aria-label={t("closeMenu")} className="backdrop-fade absolute inset-0 bg-zinc-900/40" onClick={onClose} />
+      <div className="sheet-panel absolute inset-x-0 bottom-0 rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)] shadow-xl">
         <div className="flex items-center justify-between px-5 pt-4">
           <span className="text-sm font-semibold text-zinc-900">{t("more")}</span>
           <button type="button" onClick={onClose} className="btn-ghost px-2" aria-label={t("closeMenu")}>

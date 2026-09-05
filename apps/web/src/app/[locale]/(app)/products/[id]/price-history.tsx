@@ -40,7 +40,7 @@ export async function PriceHistorySection({ groups }: { groups: StorePriceHistor
                 ) : null}
               </div>
               <div className="flex shrink-0 items-center gap-1.5">
-                <p className="text-sm font-semibold text-zinc-900">{money(group.summary.latestCents)}</p>
+                <p className="text-sm font-semibold tabular-nums text-zinc-900">{money(group.summary.latestCents)}</p>
                 {trend === "UP" ? (
                   <span className="inline-flex items-center gap-0.5 text-xs font-medium text-amber-600">
                     <ArrowUpIcon size={12} weight="bold" aria-hidden />
@@ -65,9 +65,9 @@ export async function PriceHistorySection({ groups }: { groups: StorePriceHistor
             </div>
 
             <p className="mt-1 text-xs text-zinc-500">
-              {t("lowestPrice")} {money(group.summary.lowestCents)}
+              <span className="tabular-nums">{t("lowestPrice")} {money(group.summary.lowestCents)}</span>
               <span className="mx-1.5 text-zinc-300">·</span>
-              {t("averagePrice")} {money(group.summary.averageCents)}
+              <span className="tabular-nums">{t("averagePrice")} {money(group.summary.averageCents)}</span>
               <span className="mx-1.5 text-zinc-300">·</span>
               {t("observationsCount", { count: group.summary.count })}
             </p>

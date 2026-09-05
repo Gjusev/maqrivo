@@ -111,7 +111,7 @@ export default async function OffersPage() {
                   </div>
                   <div className="shrink-0 text-right">
                     {promo.promoPriceCents != null ? (
-                      <p className="text-lg font-bold text-brand-700">
+                      <p className="text-lg font-bold tabular-nums text-brand-700">
                         {formatMoney({ amountCents: promo.promoPriceCents, currency: "EUR" }, locale)}
                       </p>
                     ) : null}

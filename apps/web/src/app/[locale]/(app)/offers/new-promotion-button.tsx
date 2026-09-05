@@ -74,8 +74,8 @@ export function NewPromotionButton({ variant = "secondary" }: { variant?: "prima
 
       {open ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal="true">
-          <button type="button" aria-label={tc("close")} className="absolute inset-0 bg-zinc-900/40" onClick={() => setOpen(false)} />
-          <div className="relative max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl">
+          <button type="button" aria-label={tc("close")} className="backdrop-fade absolute inset-0 bg-zinc-900/40" onClick={() => setOpen(false)} />
+          <div className="sheet-panel relative max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl">
             <h2 className="text-lg font-bold text-zinc-900">{t("addPromo")}</h2>
             <form onSubmit={handleSubmit} className="mt-4 space-y-3">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

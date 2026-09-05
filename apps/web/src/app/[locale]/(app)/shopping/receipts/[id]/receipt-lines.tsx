@@ -83,10 +83,23 @@ export function ReceiptLines({ receiptId, initialLines }: { receiptId: string; i
       {error ? <p className="px-3.5 pt-2 text-xs text-red-600">{error}</p> : null}
 
       <div className="p-3.5">
-        {lines.length === 0 ? (
+        {extracting ? (
+          // Skeleton rows matching the line layout while the AI reads the photo.
+          <ul className="space-y-2" aria-hidden="true">
+            {[0, 1, 2, 3].map((i) => (
+              <li key={i} className="flex items-center gap-3 rounded-xl border border-zinc-200 p-3">
+                <div className="flex-1 space-y-1.5">
+                  <div className="skeleton-row h-4 w-2/3" />
+                  <div className="skeleton-row h-3 w-1/3" />
+                </div>
+                <div className="skeleton-row h-4 w-12" />
+              </li>
+            ))}
+          </ul>
+        ) : lines.length === 0 ? (
           <p className="text-sm text-zinc-500">{t("noLines")}</p>
         ) : (
-          <ul className="space-y-2">
+          <ul className="rise-in space-y-2">
             {lines.map((line) => {
               const productLabel = line.productName ?? line.suggestion?.name ?? null;
               return (
@@ -115,7 +128,7 @@ export function ReceiptLines({ receiptId, initialLines }: { receiptId: string; i
                   <div className="flex shrink-0 items-center gap-1">
                     {line.confirmed ? (
                       <>
-                        <span className="inline-flex items-center gap-1 rounded-lg bg-brand-100 px-2.5 py-1.5 text-xs font-medium text-brand-800">
+                        <span className="pop-in inline-flex items-center gap-1 rounded-lg bg-brand-100 px-2.5 py-1.5 text-xs font-medium text-brand-800">
                           <CheckIcon size={13} weight="bold" aria-hidden />
                           {t("confirmed")}
                         </span>

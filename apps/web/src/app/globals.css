@@ -70,20 +70,23 @@
 @layer components {
   .btn-primary {
     @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-brand-600 px-4
-      text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-700
-      active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50;
+      text-sm font-semibold text-white shadow-sm transition-[color,background-color,border-color,transform]
+      duration-150 ease-out hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-2
+      focus-visible:ring-brand-500/40 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50;
   }
 
   .btn-secondary {
     @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-zinc-300
-      bg-white px-4 text-sm font-semibold text-zinc-700 shadow-sm transition-colors
-      hover:bg-zinc-50 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50;
+      bg-white px-4 text-sm font-semibold text-zinc-700 shadow-sm transition-[color,background-color,border-color,transform]
+      duration-150 ease-out hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2
+      focus-visible:ring-brand-500/40 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50;
   }
 
   .btn-ghost {
     @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-3 text-sm
-      font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900
-      active:scale-[0.98];
+      font-medium text-zinc-600 transition-[color,background-color,transform] duration-150 ease-out
+      hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2
+      focus-visible:ring-brand-500/40 active:scale-[0.97];
   }
 
   .card {
@@ -92,5 +95,93 @@
 
   .field-error {
     @apply mt-1 text-sm text-red-600;
+  }
+
+  /* ── Motion vocabulary (pure CSS — PWA performance budget, no libraries).
+     Entrance utilities mount-animate only; exits stay instant. ────────── */
+
+  /* Bottom sheets slide in from the edge they are anchored to (mobile
+     platform convention); centered modals scale+fade in from sm:. */
+  .sheet-panel {
+    animation: sheet-up 280ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .backdrop-fade {
+    animation: fade-in 180ms ease-out;
+  }
+  @media (min-width: 640px) {
+    .sheet-panel {
+      animation: modal-in 200ms cubic-bezier(0.23, 1, 0.32, 1);
+    }
+  }
+  @keyframes sheet-up {
+    from {
+      transform: translateY(100%);
+    }
+  }
+  @keyframes modal-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96) translateY(8px);
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  /* AI extraction results: content that materialized after a wait gets a
+     6px rise so it never teleports in. */
+  .rise-in {
+    animation: rise-in 220ms ease-out both;
+  }
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+
+  /* Confirmation chips pop — the action landed. */
+  .pop-in {
+    animation: pop-in 180ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+  }
+
+  /* Skeleton shimmer while AI reads a photo — matches the row layout it
+     stands in for, never blocks interaction. */
+  .skeleton-row {
+    @apply rounded-xl;
+    background: linear-gradient(
+      90deg,
+      var(--color-zinc-100) 25%,
+      var(--color-zinc-200) 37%,
+      var(--color-zinc-100) 63%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sheet-panel,
+    .backdrop-fade,
+    .rise-in,
+    .pop-in,
+    .skeleton-row {
+      animation: none;
+    }
   }
 }

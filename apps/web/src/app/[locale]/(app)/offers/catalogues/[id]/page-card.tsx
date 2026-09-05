@@ -135,7 +135,24 @@ export function PageCard({
 
       {extractError ? <p className="px-3.5 pt-2 text-xs text-red-600">{extractError}</p> : null}
 
-      {candidates !== null ? (
+      {extracting ? (
+        // Skeleton candidates matching the deal-card layout.
+        <div className="border-t border-zinc-100 p-3.5" aria-hidden="true">
+          <div className="skeleton-row mb-3 h-3 w-24" />
+          <ul className="space-y-2">
+            {[0, 1, 2].map((i) => (
+              <li key={i} className="flex items-center gap-3 rounded-xl border border-zinc-200 p-3">
+                <div className="flex-1 space-y-1.5">
+                  <div className="skeleton-row h-4 w-3/4" />
+                  <div className="skeleton-row h-3 w-1/2" />
+                  <div className="skeleton-row h-4 w-16" />
+                </div>
+                <div className="skeleton-row h-9 w-20 rounded-lg" />
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : candidates !== null ? (
         <div className="border-t border-zinc-100 p-3.5">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">{t("candidates")}</p>
           {candidates.length === 0 ? (
@@ -154,7 +171,7 @@ export function PageCard({
                   onChange={(e) => setValidUntil(e.target.value)}
                 />
               </div>
-              <ul className="space-y-2">
+              <ul className="rise-in space-y-2">
                 {candidates.map((candidate) => {
                   const promotionId = confirmed[candidate.index];
                   const added = basketAdded[candidate.index];

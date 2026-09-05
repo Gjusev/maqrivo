@@ -43,8 +43,8 @@ export function NewCatalogueButton({ variant = "secondary" }: { variant?: "prima
 
       {open ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal="true">
-          <button type="button" aria-label={t("addCatalogue")} className="absolute inset-0 bg-zinc-900/40" onClick={() => setOpen(false)} />
-          <div className="relative w-full max-w-md rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl">
+          <button type="button" aria-label={t("addCatalogue")} className="backdrop-fade absolute inset-0 bg-zinc-900/40" onClick={() => setOpen(false)} />
+          <div className="sheet-panel relative w-full max-w-md rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl">
             <h2 className="text-lg font-bold text-zinc-900">{t("addCatalogue")}</h2>
             <form onSubmit={handleSubmit} className="mt-4 space-y-3">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
