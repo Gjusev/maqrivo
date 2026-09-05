@@ -15,6 +15,9 @@ const nearbyLocation = z
     osm_id: z.number().nullable().optional(),
     osm_type: z.enum(["NODE", "WAY", "RELATION"]).nullable().optional(),
     osm_name: z.string().nullable().optional(),
+    osm_lat: z.number().nullable().optional(),
+    osm_lon: z.number().nullable().optional(),
+    price_count: z.number().nullable().optional(),
     // Legacy fields retained during the API transition.
     location_id: z.number().optional(),
     osm_node_id: z.number().optional(),
@@ -49,6 +52,10 @@ export interface OpenPricesStoreMatch {
   osmId: number | null;
   osmType: "NODE" | "WAY" | "RELATION" | null;
   name: string | null;
+  /** Location coordinates + community price volume; null when absent. */
+  lat: number | null;
+  lon: number | null;
+  priceCount: number | null;
 }
 
 export async function findOpenPricesLocations(
@@ -74,6 +81,9 @@ export async function findOpenPricesLocations(
       osmId: location.osm_id ?? legacyReference.osmId,
       osmType: location.osm_type ?? legacyReference.osmType,
       name: location.osm_name ?? location.name ?? null,
+      lat: location.osm_lat ?? null,
+      lon: location.osm_lon ?? null,
+      priceCount: location.price_count ?? null,
     }];
   });
 }
@@ -111,4 +121,21 @@ export async function fetchOpenPricesAtLocation(locationId: number, page = 1): P
           : null,
     }];
   });
+}
+
+/**
+ * Every price page for a location (capped): busy stores exceed one page of
+ * 100, and a silent page-1-only read undercounts community coverage.
+ */
+export async function fetchAllOpenPricesAtLocation(
+  locationId: number,
+  maxPages = 5,
+): Promise<OpenPricesPrice[]> {
+  const all: OpenPricesPrice[] = [];
+  for (let page = 1; page <= maxPages; page++) {
+    const batch = await fetchOpenPricesAtLocation(locationId, page);
+    all.push(...batch);
+    if (batch.length < 100) break;
+  }
+  return all;
 }

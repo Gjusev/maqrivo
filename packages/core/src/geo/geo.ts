@@ -3,6 +3,7 @@
  * grid-snap matters to privacy (home coordinates never leave the server
  * unsnapped). Pure math, deterministic.
  */
+import { normalizeName } from "../matching/normalize";
 
 const EARTH_RADIUS_M = 6_371_008.8; // IUGG mean Earth radius
 
@@ -66,4 +67,41 @@ export function orderStoresByProximity<T extends { lat: number; lng: number }>(
     cursor = next;
   }
   return ordered;
+}
+
+export interface LocationCandidate {
+  /** Stable unique key of the external location, e.g. "WAY:712015104". */
+  readonly key: string;
+  readonly name: string | null;
+  readonly lat: number | null;
+  readonly lon: number | null;
+}
+
+/**
+ * Fallback store-location match for external price sources: the same shop is
+ * often mapped as different OSM elements (a node for the entrance, a way for
+ * the building), so exact identity matching misses real prices. Require
+ * normalized-name EQUALITY (never fuzzy) inside a tight radius and prefer the
+ * nearest candidate — UNRESOLVED stays preferable to a wrong match.
+ */
+export function matchStoreLocation(
+  store: { name: string; lat: number; lng: number },
+  candidates: readonly LocationCandidate[],
+  maxMeters = 150,
+): LocationCandidate | null {
+  const wanted = normalizeName(store.name);
+  if (!wanted) return null;
+  let best: LocationCandidate | null = null;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  for (const candidate of candidates) {
+    if (!candidate.name || candidate.lat == null || candidate.lon == null) continue;
+    if (normalizeName(candidate.name) !== wanted) continue;
+    const d = distanceMeters(store, { lat: candidate.lat, lng: candidate.lon });
+    if (d > maxMeters) continue;
+    if (d < bestDistance) {
+      bestDistance = d;
+      best = candidate;
+    }
+  }
+  return best;
 }

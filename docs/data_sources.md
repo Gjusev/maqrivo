@@ -19,6 +19,7 @@ Consolidated from `docs/research/*` (all claims cited there; fetched 2026-09-04)
 - **Purpose**: price observations with store, product, date, proof photos; discount fields.
 - **Official** Open Food Facts ecosystem project; ODbL; anonymous reads; France is the top-covered country (~207 k of ~307 k prices; ~2 440 stores). Verified live: 2 km around La Défense → 8 stores, 202 prices.
 - **Integration**: REST `https://api.openfoodfacts.org/api/v1` (OpenAPI published): `locations/nearby?lat&lon&radius_km`, `prices?lat&lon&radius_km`, filters by store/location/product; fields include `price_is_discounted`, `discount_type`, `price_without_discount` → feeds the promotion pipeline as discount observations. Pagination: page size ≤ 100.
+- **Store matching**: exact OSM identity (`NODE/WAY/RELATION:id`) first; the same shop is often mapped as a different OSM element (entrance node vs building way), so a fallback matches by normalized-name equality within 150 m (nearest candidate wins, never fuzzy, never reusing a location claimed by an exact match). Sync stats expose `storesMatchedProximity` to audit the fallback share. Prices are read page-complete (≤ 5 pages of 100).
 - **Freshness**: per-observation dates; treat as opportunistic — density per store is uneven (most local stores have 1–6 prices). Explicit "observed N days ago" always. Credential-gated receipt write-back is implemented but off by default.
 - **Fallback**: user manual price observations (first-class, evidence-attached).
 

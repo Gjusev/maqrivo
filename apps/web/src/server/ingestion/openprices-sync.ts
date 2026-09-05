@@ -1,19 +1,26 @@
 /**
  * Open Prices → price observations sync for enabled stores.
- * Store matching is by OSM node id (our stores carry osm_node in externalIds).
+ * Store matching: exact OSM identity first; a tight proximity+name fallback
+ * catches the same shop mapped as a different OSM element (node vs way).
  * Only prices for products we already know are imported (barcode/OFF match);
  * unmatched prices are counted, never guessed onto wrong products.
  */
 import { eq, inArray } from "drizzle-orm";
 import { db } from "../db";
 import { ingestionRun, priceObservation, product, store, userStorePrefs } from "@maqrivo/db";
-import { fetchOpenPricesAtLocation, findOpenPricesLocations } from "../integrations/openprices";
-import { snapToGrid } from "@maqrivo/core";
+import {
+  fetchAllOpenPricesAtLocation,
+  findOpenPricesLocations,
+  type OpenPricesStoreMatch,
+} from "../integrations/openprices";
+import { matchStoreLocation, snapToGrid } from "@maqrivo/core";
 import { osmReferenceFromExternalIds } from "../integrations/osm/reference";
 
 export interface SyncResult {
   storesConsidered: number;
   storesMatched: number;
+  /** Subset matched by the proximity+name fallback (no exact OSM identity). */
+  storesMatchedProximity: number;
   pricesSeen: number;
   observationsImported: number;
   unmatchedProducts: number;
@@ -32,6 +39,7 @@ export async function runOpenPricesSync(): Promise<SyncResult> {
   const result: SyncResult = {
     storesConsidered: 0,
     storesMatched: 0,
+    storesMatchedProximity: 0,
     pricesSeen: 0,
     observationsImported: 0,
     unmatchedProducts: 0,
@@ -55,9 +63,12 @@ export async function runOpenPricesSync(): Promise<SyncResult> {
       return result;
     }
 
-    // Location index: one nearby query per ~1.5 km cell around the first store.
+    // Location index: one nearby query per ~1.5 km cell (2 km read radius
+    // covers every point of the cell). Coordinates are kept for the
+    // proximity fallback.
     const seenCells = new Set<string>();
     const locationByOsm = new Map<string, number>();
+    const allLocations: OpenPricesStoreMatch[] = [];
     for (const s of osmStores) {
       const center = snapToGrid({ lat: s.lat, lng: s.lng }, 1500);
       const cellKey = `${center.lat.toFixed(3)},${center.lng.toFixed(3)}`;
@@ -65,6 +76,7 @@ export async function runOpenPricesSync(): Promise<SyncResult> {
         seenCells.add(cellKey);
         try {
           const locations = await findOpenPricesLocations(center, 2);
+          allLocations.push(...locations);
           for (const loc of locations) {
             if (loc.osmId != null && loc.osmType) {
               locationByOsm.set(`${loc.osmType}:${String(loc.osmId)}`, loc.locationId);
@@ -75,17 +87,43 @@ export async function runOpenPricesSync(): Promise<SyncResult> {
         }
       }
     }
+    const claimedLocationIds = new Set<number>();
+    const locationByCandidateKey = new Map(
+      allLocations.map((l) => [`${l.osmType ?? "?"}:${String(l.osmId ?? "?")}`, l]),
+    );
 
     for (const s of osmStores) {
       const osmReference = osmReferenceFromExternalIds(s.externalIds);
       if (!osmReference) continue;
-      const locationId = locationByOsm.get(`${osmReference.type}:${String(osmReference.id)}`);
-      if (!locationId) continue;
+      let locationId = locationByOsm.get(`${osmReference.type}:${String(osmReference.id)}`) ?? null;
+      let matchedByProximity = false;
+      if (locationId === null) {
+        // Same shop, different OSM element: normalized-name equality within
+        // 150 m (never fuzzy), nearest candidate wins, never reuse a location
+        // already claimed by an exact match.
+        const candidate = matchStoreLocation(
+          { name: s.name, lat: s.lat, lng: s.lng },
+          allLocations.map((l) => ({
+            key: `${l.osmType ?? "?"}:${String(l.osmId ?? "?")}`,
+            name: l.name,
+            lat: l.lat,
+            lon: l.lon,
+          })),
+        );
+        const proximate = candidate ? locationByCandidateKey.get(candidate.key) : undefined;
+        if (proximate && !claimedLocationIds.has(proximate.locationId)) {
+          locationId = proximate.locationId;
+          matchedByProximity = true;
+        }
+      }
+      if (locationId === null || claimedLocationIds.has(locationId)) continue;
+      claimedLocationIds.add(locationId);
       result.storesMatched += 1;
+      if (matchedByProximity) result.storesMatchedProximity += 1;
 
       let prices;
       try {
-        prices = await fetchOpenPricesAtLocation(locationId);
+        prices = await fetchAllOpenPricesAtLocation(locationId);
       } catch (err) {
         warnings.push(`prices loc=${locationId}: ${err instanceof Error ? err.message : "failed"}`);
         continue;
@@ -163,6 +201,7 @@ async function finishRun(runId: string, status: "succeeded" | "partial", result:
       stats: {
         storesConsidered: result.storesConsidered,
         storesMatched: result.storesMatched,
+        storesMatchedProximity: result.storesMatchedProximity,
         pricesSeen: result.pricesSeen,
         imported: result.observationsImported,
         unmatchedProducts: result.unmatchedProducts,

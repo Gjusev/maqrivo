@@ -262,7 +262,10 @@
       "drive": "Drive",
       "contact": "Contact",
       "convenience": "Convenience"
-    }
+    },
+    "searchStores": "Search a store…",
+    "noStoreMatches": "No store matches this search.",
+    "moreStores": "+ {count} farther stores — refine with the search."
   },
   "Products": {
     "title": "Products",

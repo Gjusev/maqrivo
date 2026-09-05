@@ -262,7 +262,10 @@
       "drive": "Drive",
       "contact": "Proxi",
       "convenience": "Épicerie"
-    }
+    },
+    "searchStores": "Rechercher un magasin…",
+    "noStoreMatches": "Aucun magasin ne correspond à cette recherche.",
+    "moreStores": "+ {count} magasins plus éloignés — affinez avec la recherche."
   },
   "Products": {
     "title": "Produits",

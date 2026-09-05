@@ -10,6 +10,7 @@ import { formatDistance } from "@/lib/format";
 import { StoreCard } from "./store-card";
 import { DiscoverButton } from "./discover-button";
 import { NewStoreLink } from "./new-store-link";
+import { NearbyStores } from "./nearby-stores";
 import { StoresMap } from "./stores-map";
 
 export default async function StoresPage() {
@@ -122,23 +123,20 @@ export default async function StoresPage() {
                 {t("nearby")} · {nearby.length}
               </h2>
               <p className="mb-2 text-xs text-zinc-400">{t("enabledHint")}</p>
-              <ul className="space-y-2">
-                {nearby.slice(0, 40).map((r) => (
-                  <StoreCard
-                    key={r.store.id}
-                    storeId={r.store.id}
-                    name={r.store.name}
-                    retailer={r.retailerName ?? null}
-                    format={r.store.format}
-                    origin={r.store.origin}
-                    tags={r.store.tags}
-                    distanceLabel={r.prefs.distanceM != null ? formatDistance(r.prefs.distanceM) : null}
-                    enabled={r.prefs.enabled}
-                    favorite={r.prefs.favorite}
-                    avoided={r.prefs.avoided}
-                  />
-                ))}
-              </ul>
+              <NearbyStores
+                stores={nearby.map((r) => ({
+                  storeId: r.store.id,
+                  name: r.store.name,
+                  retailer: r.retailerName ?? null,
+                  format: r.store.format,
+                  origin: r.store.origin,
+                  tags: r.store.tags,
+                  distanceLabel: r.prefs.distanceM != null ? formatDistance(r.prefs.distanceM) : null,
+                  enabled: r.prefs.enabled,
+                  favorite: r.prefs.favorite,
+                  avoided: r.prefs.avoided,
+                }))}
+              />
             </section>
           ) : null}
 
