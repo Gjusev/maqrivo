@@ -167,20 +167,23 @@ export async function promotionDealAssessments(
   for (const promo of promotions) {
     const match = matchByPromotion.get(promo.id);
     if (!match) continue;
-    // A directly comparable price on a matching basis, or nothing.
+    // A directly comparable price on a matching basis, when one exists.
     const comparable =
       promo.promoPriceCents != null
         ? { cents: promo.promoPriceCents, basis: "unit" }
         : promo.pricePerKgCents != null
           ? { cents: promo.pricePerKgCents, basis: "per_kg" }
           : null;
-    if (!comparable) continue;
-    const pool = promo.storeId
-      ? poolByStore.get(`${match.productId}:${promo.storeId}:${comparable.basis}`)
-      : poolAcrossStores.get(`${match.productId}:${comparable.basis}`);
-    if (!pool || pool.length === 0) continue;
+    const pool = comparable
+      ? promo.storeId
+        ? poolByStore.get(`${match.productId}:${promo.storeId}:${comparable.basis}`)
+        : poolAcrossStores.get(`${match.productId}:${comparable.basis}`)
+      : undefined;
+    // Matched products always link; the badge needs history to say anything
+    // (assessDeal on an empty pool is an honest NO_HISTORY).
+    const priceCents = comparable?.cents ?? 0;
     result.set(promo.id, {
-      assessment: assessDeal(comparable.cents, pool),
+      assessment: pool ? assessDeal(priceCents, pool) : assessDeal(priceCents, []),
       productId: match.productId,
       productName: match.productName,
     });

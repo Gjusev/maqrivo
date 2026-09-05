@@ -23,7 +23,8 @@ The ingestion scheduler composes jobs **only** from declared capabilities — ca
 | Adapter | discoverStores | fetchCatalogues | fetchPromotions | fetchPrices | resolveRetailerProduct |
 |---|---|---|---|---|---|
 | `CarrefourAdapter` | ✅ verified public eligibility API | 🔬 experimental flag (documented no-login endpoints) | 🔬 via catalogue flag | ❌ (Cloudflare) — Open Prices + user observations instead | 🔬 GTIN-keyed (with catalogue flag) |
-| `IntermarcheAdapter` | ❌ (DataDome) — open data covers discovery | ✅ public flipbook host, store-keyed | ✅ extracted from catalogue pages (EXTRACTED status) | ❌ | ❌ |
+| `IntermarcheAdapter` | ❌ (DataDome) — open data covers discovery | ✅ **structured** (EAN + prices per zone, no AI) — national; store-keyed needs PDV codes | ✅ same payload (LOYALTY_PRICE mapping) | ❌ | ✅ barcode-EXACT via tryMatchPromotionProduct |
+| `LidlAdapter` | ❌ — open data covers discovery | ✅ **structured** (prices, no EAN) — national flyers | ✅ same payload | ❌ | 🔬 name/brand scorer (no EAN in payload) |
 | `BonialAdapter` | — | — | — | — | **Not built** — programmatic use rejected (CGU, robots); manual entry is the aggregator fallback |
 
 Key: ✅ slice · 🔬 behind config flag with hard backoff · ❌ not attempted.
@@ -38,4 +39,4 @@ Key: ✅ slice · 🔬 behind config flag with hard backoff · ❌ not attempted
 
 ## Adding a retailer (iteration protocol)
 
-Research (updated in `docs/research/french-retailers.md`) → document in `docs/data_sources.md` → implement adapter with real capabilities only → fixtures + parser tests → one supervised live run → inspect data quality in the admin view → only then mark supported. Candidates in order: Lidl (public leaflets), E.Leclerc (drive API, DataDome-gated), Monoprix, Franprix, G20.
+Research (updated in `docs/data_sources.md`, live-verified endpoints) → implement adapter with real capabilities only → fixtures + parser tests → one supervised live run → inspect data quality in the admin view → only then mark supported. Next candidates in order: Auchan (SSR HTML zones), G20 (Spree, EAN-keyed), Monoprix (Nuxt payload resolver). Excluded by policy: E.Leclerc API (Akamai), Super U (Cloudflare), Franprix (bot wall), Bonial (CGU).

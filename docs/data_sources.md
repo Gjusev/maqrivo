@@ -45,15 +45,29 @@ Detail and citations in `docs/research/french-retailers.md` (verified live 2026-
 - **Catalogue/product endpoints (second-hand, documented by the CarrefourDriveMCP project)**: no-login endpoints for search (`/s?q=`), autocomplete, `POST /products`, GTIN-keyed product lookups (EANs are first-class). Treated as **experimental capability** behind a config flag: low frequency, unique User-Agent, hard backoff on first 403/429, run marked failed — never escalated to browser emulation or anti-bot circumvention.
 - **Drive prices ≠ in-store prices**; Cloudflare Bot Management limits sustained reads → prices at Carrefour come from Open Prices + user observations, not scraping.
 
-### Intermarché — catalogue-only posture
+### Intermarché — structured catalogue adapter (shipped 2026-09-05)
 
 - Direct site access blocked by DataDome (verified: 403 `x-dd: protected` on all HTML). Maqrivo does **not** bypass it.
 - Store discovery via open data instead: OSM (Q3153200), supermarche.com, Open Prices locations.
-- **Prospectus catalogues**: the flipbook host `layout-prod-intermarche.e-catalogues.pro` is public and serves store-specific leaflet images keyed by store id — the catalogue ingestion pipeline (image pages → AI extraction → promotions at EXTRACTED/NEEDS_VERIFICATION with page-level evidence) without touching any protection.
+- **Prospectus catalogues — structured (live-verified 2026-09-05, `apps/web/fixtures/intermarche/`)**: the Aristid/e-catalogues platform behind the official leaflet viewer exposes `https://api-prod-intermarche.e-catalogues.pro/api` with a static public key shipped in the viewer JS bundle (public-by-design; same trust class as the Carrefour eligibility endpoint) plus `Origin`/`Referer` viewer headers. Endpoints: `/catalogs/allV1AndNotLocal` (national list), `/catalogs/{designation}` (numeric id), `/catalogs/{id}/pages` — **pages carry per-zone `product.{ean, price, oldPrice, offerPrice, unitVolumePrice, packaging, subCategory, description3}`**: promotions ingest WITHOUT any AI step, EAN-keyed (barcode-EXACT product matching), loyalty offers mapped to LOYALTY_PRICE. Per-store local catalogues (`/catalogs?codeStore={pdv}`) await PDV codes on stores. First live run: 3 catalogues, 134 promotions (126 with EAN).
+- Media host `medias-prod-intermarche.e-catalogues.pro` serves page images publicly without the key (evidence view-source URLs).
 
-### Other chains (researched, deferred per iteration policy)
+### Lidl France — structured flyer adapter (shipped 2026-09-05)
 
-E.Leclerc (best-documented drive API, DataDome-gated), Lidl (public image leaflets with validity dates; no prices — no food e-commerce), Monoprix (Demandware/OCAPI, robots-blocked), Franprix (blocks even robots.txt), G20 (tiny chain, fully permissive shop at g20-minute.com — candidate for a later iteration if geographically relevant).
+- Schwarz Group leaflet platform, fully public (no auth, no key, CORS-open; live-verified, `apps/web/fixtures/lidl/`): `GET https://endpoints.leaflets.schwarz/v4/overview?client_locale=lidl/fr-FR` → national flyers with validity dates, then `flyerJson` URL per flyer → `flyer.products` with `{title, brand, price}`. Prices structured, **no EAN** — matching falls to the deterministic name/brand scorer. v1 national flyers only (regional `offer_region` variants later). First live run: 2 flyers, 105 promotions.
+
+### Other chains (re-verified 2026-09-05)
+
+- **Auchan — viable (not yet built)**: server-rendered `/catalogue/{designation}?version=V1` embeds page images + product zones with prices in text; same Aristid platform as Intermarché (JSON path unverified — 401). HTML-parse adapter is the follow-up.
+- **Monoprix — viable with effort (not yet built)**: `catalogue.monoprix.fr` (robots-empty) SSR-embeds structured promotions (EAN + prices) in a Nuxt payload with minified-variable refs; Petit Casino/Spar/Vival share the same rcdss/Dewib platform (price display flag off for those brands). Needs a payload resolver.
+- **G20 — viable (not yet built)**: Spree Commerce at `g20-minute.com/taxons/promotions`, EAN-keyed cards with `data-qty-price` cents; small Paris chain.
+- **E.Leclerc — excluded (API)**: viewer API `nos-catalogues-promos-v2-api.e.leclerc` returned 200 once then Akamai 403s — no-bypass policy excludes it. Listing HTML + manual consultation remain.
+- **Super U — excluded**: catalogue detail pages sit behind a Cloudflare JS challenge.
+- **Franprix — excluded**: robots.txt itself is bot-walled (403).
+
+### Open Prices — write-back (verified 2026-09-05, not yet wired)
+
+`https://prices.openfoodfacts.org/api/v1` (pre-prod `prices.openfoodfacts.net`, separate token): `POST /auth` (username/password form) → Bearer token; `POST /proofs/upload` (multipart, `type` ∈ PRICE_TAG/RECEIPT/…, returns proof id); `POST /prices` requiring `proof_id` + (`product_code` XOR `category_tag`) + `price`, `price_per`, `currency`, `date`, location (OSM id/type or location id), optional discount fields, `source: maqrivo`. ODbL — attribution + share-back. Implementation awaits the user's OFF credentials (off by default), then: receipt confirmations push as type RECEIPT proofs.
 
 ### Principles (all adapters)
 

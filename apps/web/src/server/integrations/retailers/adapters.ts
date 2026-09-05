@@ -3,4 +3,5 @@
  * Only verified public endpoints get a line here (ADR-0005 — no anti-bot
  * bypass, no Bonial). An empty registry means the catalogue-sync job no-ops.
  */
-// e.g. import "./intermarche";
+import "./intermarche";
+import "./lidl";

@@ -1,0 +1,300 @@
+{
+ "self": "v4/flyer?flyer_identifier=du-03-09-au-09-09-les-promos-de-la-semaine",
+ "version": 4,
+ "success": true,
+ "dateTime": "2026-09-05T11:43:56+00:00",
+ "flyer": {
+  "id": "01a03e2c-1afa-7c7c-9ae6-f4c9f761c4cb",
+  "name": "Du 03/09 au 09/09",
+  "title": "Les promos de la semaine",
+  "locale": "fr-FR",
+  "clientLocale": "lidl/fr-FR",
+  "apiCountryCode": "FR",
+  "countryCode": "FR",
+  "category": "HHZ FR fr-FR",
+  "subcategory": "Les promos de la semaine",
+  "quitUrl": "https://www.lidl.fr/c/catalogues-en-ligne/s10017753",
+  "homeUrl": "https://www.lidl.fr/",
+  "privacyUrl": "https://www.lidl.fr/c/protection-des-donnees/s10017503?hidebanner=true",
+  "imprintUrl": "https://www.lidl.fr/c/mentions-legales/s10007952?hidebanner=true",
+  "newsletterUrl": "https://www.lidl.fr/fr/informations-clients/inscription-newsletter",
+  "isActive": true,
+  "showProductDetails": true,
+  "showProductLinks": true,
+  "showRclAnimation": true,
+  "showRecommendedProducts": false,
+  "showNewsletter": false,
+  "showNotificationCenter": true,
+  "enableSharing": true,
+  "enableDownload": true,
+  "myAccount": true,
+  "shoppingCart": true,
+  "pdfUrl": "https://assets.leaflets.schwarz/leaflets/pdfs/01a03e2c-1afa-7c7c-9ae6-f4c9f761c4cb/Du-03-09-au-09-09-Les-promos-de-la-semaine-00.pdf",
+  "hiResPdfUrl": "https://assets.leaflets.schwarz/leaflets/pdfs/01a03e2c-1afa-7c7c-9ae6-f4c9f761c4cb/Du-03-09-au-09-09-Les-promos-de-la-semaine-00.pdf",
+  "hiResFileSize": 36738839,
+  "fileSize": 36738839,
+  "teasers": [],
+  "regions": [
+   {
+    "code": "0"
+   }
+  ],
+  "thumbnailUrl": "https://imgproxy.leaflets.schwarz/nzgEwJTVDFbAaRcF0YCNV_Vyxh3tuar9tR8pkZGZoN0/rs:fit:400:400:1/g:no/czM6Ly9sZWFmbGV0cy9pbWFnZXMvMDFhMDNlMmMtMWFmYS03YzdjLTlhZTYtZjRjOWY3NjFjNGNiL3BhZ2UtMDFfZmI4NGQ1MDJiZjQ3NjBkZDI4OTA2NzM1NGMxZjc0NDQucG5n.jpg",
+  "publicThumbnail": "https://imgproxy.leaflets.schwarz/nzgEwJTVDFbAaRcF0YCNV_Vyxh3tuar9tR8pkZGZoN0/rs:fit:400:400:1/g:no/czM6Ly9sZWFmbGV0cy9pbWFnZXMvMDFhMDNlMmMtMWFmYS03YzdjLTlhZTYtZjRjOWY3NjFjNGNiL3BhZ2UtMDFfZmI4NGQ1MDJiZjQ3NjBkZDI4OTA2NzM1NGMxZjc0NDQucG5n.jpg",
+  "flyerUrlAbsolute": "https://www.lidl.fr/l/catalogue-de-la-semaine/du-03-09-au-09-09-les-promos-de-la-semaine/ar/0?_ab=1&lf=HHZ+-+F",
+  "startDate": "2026-08-27",
+  "endDate": "2026-09-09",
+  "offerStartDate": "2026-09-03",
+  "offerEndDate": "2026-09-09",
+  "showLinks": true,
+  "showTopics": true,
+  "showSearch": false,
+  "showRelatedFlyers": true,
+  "isRecommended": true,
+  "status": "current",
+  "cookieConsent": {
+   "type": "oneTrust",
+   "domainId": "3bbd54dc-b8ca-4ee3-a7b3-5a6268439941"
+  },
+  "pages": [
+   {
+    "number": 1,
+    "image": "https://imgproxy.leaflets.schwarz/hHuAoUSSZ_Th8TPOJNGeG9JrkHFYS-Iazu7GKrNpG8Q/rs:fit:1200:1200:1/g:no/czM6Ly9sZWFmbGV0cy9pbWFnZXMvMDFhMDNlMmMtMWFmYS03YzdjLTlhZTYtZjRjOWY3NjFjNGNiL3BhZ2UtMDFfZmI4NGQ1MDJiZjQ3NjBkZDI4OTA2NzM1NGMxZjc0NDQucG5n.jpg",
+    "links": [
+     {
+      "id": "01a03e2f-a99d-7557-b759-aff91640470f",
+      "displayType": "internal",
+      "url": "",
+      "title": "Lien interne",
+      "icon": "link",
+      "width": 4.0387722132472,
+      "height": 2.7645376549094,
+      "top": 25.357483317445002,
+      "left": 10.500807754443,
+      "pageNumber": "2"
+     },
+     {
+      "id": "01a03e31-9793-7e7a-9e27-1cbd3809cee2",
+      "displayType": "internal",
+      "url": "",
+      "title": "Lien interne",
+      "icon": "link",
+      "width": 6.3004846526656,
+      "height": 3.813155386082,
+      "top": 38.60819828408,
+      "left": 41.357027463651,
+      "pageNumber": "21"
+     }
+    ]
+   },
+   {
+    "number": 2,
+    "image": "https://imgproxy.leaflets.schwarz/vh3owoJY84_WLvql_aeWb2phpymtFimSBNiKSuBcmZc/rs:fit:1200:1200:1/g:no/czM6Ly9sZWFmbGV0cy9pbWFnZXMvMDFhMDNlMmMtMWFmYS03YzdjLTlhZTYtZjRjOWY3NjFjNGNiL3BhZ2UtMDJfMTYxZDUxOWUzOWFkY2QzMTk1ZDNjMzliZDc5MzIyMmQucG5n.jpg",
+    "links": [
+     {
+      "id": "01a03e35-919f-70b6-b935-9dc1d9cfb70b",
+      "displayType": "standard",
+      "url": "https://recettes.lidl.fr/recettes/samoussas-chevre-raisin-menthe",
+      "title": "Ce lien",
+      "icon": "link",
+      "width": 5.3311793214863,
+      "height": 3.0505243088656,
+      "top": 76.835081029552,
+      "left": 86.26817447496
+     },
+     {
+      "id": "01a03e35-1e68-7075-8e72-b57865b198c8",
+      "displayType": "standard",
+      "url": "https://recettes.lidl.fr/recettes/sticks-de-bananes",
+      "title": "Ce lien",
+      "icon": "link",
+      "width": 4.2003231017771,
+      "height": 2.4785510009533,
+      "top": 86.939942802669,
+      "left": 17.932148626817
+     }
+    ]
+   },
+   {
+    "number": 3,
+    "image": "https://imgproxy.leaflets.schwarz/Vw41B05i522_p5nPzch3_5eM88ZRtOqGjhQIZZCNRPE/rs:fit:1200:1200:1/g:no/czM6Ly9sZWFmbGV0cy9pbWFnZXMvMDFhMDNlMmMtMWFmYS03YzdjLTlhZTYtZjRjOWY3NjFjNGNiL3BhZ2UtMDNfNmI1OGRkNjYyNDY0NjViYWEzZWJkNTVlYTNlYjc0ODgucG5n.jpg",
+    "links": [
+     {
+      "id": "01a06148-1178-7db3-8678-981a34dd5f69",
+      "displayType": "standard",
+      "url": "https://recettes.lidl.fr/recettes/parmigiana-de-courgettes",
+      "title": "Ce lien",
+      "icon": "link",
+      "width": 5.1696284329564,
+      "height": 2.4785510009533,
+      "top": 30.886558627263994,
+      "left": 17.932148626817
+     },
+     {
+      "id": "01a06148-1178-7db3-8678-981a352fa8ee",
+      "displayType": "standard",
+      "url": "https://recettes.lidl.fr/recettes/tarte-aux-prunes-rouges-et-basilic",
+      "title": "Ce lien",
+      "icon": "link",
+      "width": 5.0080775444265,
+      "height": 2.0972354623451,
+      "top": 26.310772163966007,
+      "left": 68.820678513732
+     }
+    ]
+   },
+   {
+    "number": 4,
+    "image": "https://imgproxy.leaflets.schwarz/m6hJdxHC6ItJ1BpCkH5YcCOKaIrnORcOjIZDsXcmIiY/rs:fit:1200:1200:1/g:no/czM6Ly9sZWFmbGV0cy9pbWFnZXMvMDFhMDNlMmMtMWFmYS03YzdjLTlhZTYtZjRjOWY3NjFjNGNiL3BhZ2UtMDRfOWI1Yzc2YmFlZjAyYjVhNmI0MTliMzgxOGI3MzY3YzQucG5n.jpg",
+    "links": [
+     {
+      "id": "01a03ee2-0f83-79e0-a04a-2c78acf86ad2",
+      "displayType": "standard",
+      "url": "https://recettes.lidl.fr/recettes/confiture-de-mirabelles",
+      "title": "Ce lien",
+      "icon": "link",
+      "width": 4.6849757673667,
+      "height": 3.2411820781697,
+      "top": 80.74356530028601,
+      "left": 77.382875605816
+     }
+    ]
+   }
+  ],
+  "topics": [],
+  "videos": [],
+  "texts": [],
+  "products": {
+   "01a03e38-946a-72af-91bf-9bf239993fee": {
+    "productId": "100409103",
+    "title": "LIVARNO® Matelas pliant, 190 x 65 x 8,5 cm",
+    "brand": "LIVARNO®",
+    "currencyText": "EUR",
+    "wonCategoryPrimary": "Mondes de besoins/Habitat & aménagement/Chambre à coucher",
+    "wonCategoryPrimaryPath": "0/14/1410",
+    "canonicalUrl": "/p/livarno-matelas-pliant-190-x-65-x-8-5-cm/p100409103",
+    "categoryPrimary": "Assortiment/Habitat/Literie & matelas/Matelas/Matelas d’appoint",
+    "image": "https://www.lidl.fr/assets/gcp06c952e1120947c8a6d002dcc1369d17.jpg",
+    "url": "https://www.lidl.fr/p/livarno-matelas-pliant-190-x-65-x-8-5-cm/p100409103",
+    "price": "24.99",
+    "currencySymbol": "€",
+    "description": "Dimensions : d&eacute;pli&eacute; : L 190 x l 65 x H 8,5 cm, en si&egrave;ge : L 63 x l 65 x H 25,5 cm",
+    "categoryPrimaryPath": "0/31/3130/313010/31301014"
+   },
+   "01a03e39-1573-70dc-b0bf-44cb26cdba7f": {
+    "productId": "100409723",
+    "title": "LIVARNO® Drap-housse en satin de coton, 90-100 x 200 cm",
+    "brand": "LIVARNO®",
+    "currencyText": "EUR",
+    "wonCategoryPrimary": "Mondes de besoins/Habitat & aménagement/Chambre à coucher",
+    "wonCategoryPrimaryPath": "0/14/1410",
+    "canonicalUrl": "/p/livarno-drap-housse-en-satin-de-coton-90-100-x-200-cm/p100409723",
+    "categoryPrimary": "Assortiment/Habitat/Literie & matelas/Drap-housses",
+    "image": "https://www.lidl.fr/assets/gcp1426916b4be148b6b5fee305f6ccd267.jpg",
+    "url": "https://www.lidl.fr/p/livarno-drap-housse-en-satin-de-coton-90-100-x-200-cm/p100409723",
+    "price": "5.99",
+    "currencySymbol": "€",
+    "description": "Composition : 100 % coton Taille : 90-100 x 200 cm",
+    "categoryPrimaryPath": "0/31/3130/313070"
+   },
+   "01a03e39-9419-7640-8c96-ec2d17897216": {
+    "productId": "100409469",
+    "title": "LIVARNO® Drap-housse en satin de coton, 140-160 x 200 cm",
+    "brand": "LIVARNO®",
+    "currencyText": "EUR",
+    "wonCategoryPrimary": "Mondes de besoins/Habitat & aménagement/Chambre à coucher",
+    "wonCategoryPrimaryPath": "0/14/1410",
+    "canonicalUrl": "/p/livarno-drap-housse-en-satin-de-coton-140-160-x-200-cm/p100409469",
+    "categoryPrimary": "Assortiment/Habitat/Literie & matelas/Drap-housses",
+    "image": "https://www.lidl.fr/assets/gcpf81c5366b37c4f319bc6f2cf95bbaf90.jpg",
+    "url": "https://www.lidl.fr/p/livarno-drap-housse-en-satin-de-coton-140-160-x-200-cm/p100409469",
+    "price": "7.99",
+    "currencySymbol": "€",
+    "description": "Composition&nbsp;: 100 % coton Taille : 140-160 x 200 cm",
+    "categoryPrimaryPath": "0/31/3130/313070"
+   },
+   "01a03e3a-17dc-7a6a-be41-1247a746905b": {
+    "productId": "100409463",
+    "title": "LIVARNO® Drap-housse en satin de coton, 180-200 x 200 cm",
+    "brand": "LIVARNO®",
+    "currencyText": "EUR",
+    "wonCategoryPrimary": "Mondes de besoins/Habitat & aménagement/Chambre à coucher",
+    "wonCategoryPrimaryPath": "0/14/1410",
+    "canonicalUrl": "/p/livarno-drap-housse-en-satin-de-coton-180-200-x-200-cm/p100409463",
+    "categoryPrimary": "Assortiment/Habitat/Literie & matelas/Drap-housses",
+    "image": "https://www.lidl.fr/assets/gcp5e1989d22e64435aa0d0fddf8f854145.jpg",
+    "url": "https://www.lidl.fr/p/livarno-drap-housse-en-satin-de-coton-180-200-x-200-cm/p100409463",
+    "price": "9.99",
+    "currencySymbol": "€",
+    "description": "Composition : 100 % coton Taille : 180-200 x 200 cm",
+    "categoryPrimaryPath": "0/31/3130/313070"
+   },
+   "01a03e3a-f773-79aa-bd21-0eded4992eac": {
+    "productId": "100409160",
+    "title": "PARKSIDE® Aspirateur souffleur broyeur électrique, PLS 2600 B2",
+    "brand": "PARKSIDE®",
+    "currencyText": "EUR",
+    "wonCategoryPrimary": "Mondes de besoins/Bricolage & Jardinage/Outils de jardinage",
+    "wonCategoryPrimaryPath": "0/12/1212",
+    "canonicalUrl": "/p/parkside-aspirateur-souffleur-broyeur-electrique-pls-2600-b2/p100409160",
+    "categoryPrimary": "Assortiment/Bricoler/Jardin & barbecue/Outillage & machines de jardinage/Aspirateurs & souffleurs de feuilles",
+    "image": "https://www.lidl.fr/assets/gcp3a6863a8485246288aa5eca577c333e5.jpg",
+    "url": "https://www.lidl.fr/p/parkside-aspirateur-souffleur-broyeur-electrique-pls-2600-b2/p100409160",
+    "price": "29.99",
+    "currencySymbol": "€",
+    "description": "Puissance : 2600 W Volume du sac collecteur : 34 l",
+    "categoryPrimaryPath": "0/41/4110/411012/41101215"
+   },
+   "01a03e3a-7eb0-7fe6-b541-4f69f2c7343b": {
+    "productId": "100405631",
+    "title": "PARKSIDE® Débroussailleuse thermique PBS 2 F6, 42,7 cm³, 1,8 ch",
+    "brand": "PARKSIDE®",
+    "currencyText": "EUR",
+    "wonCategoryPrimary": "Mondes de besoins/Bricolage & Jardinage/Outils de jardinage",
+    "wonCategoryPrimaryPath": "0/12/1212",
+    "canonicalUrl": "/p/parkside-debroussailleuse-thermique-pbs-2-f6-42-7-cm-1-8-ch/p100405631",
+    "categoryPrimary": "Assortiment/Bricoler/Jardin & barbecue/Outillage & machines de jardinage/Coupe-bordures électrique",
+    "image": "https://www.lidl.fr/assets/gcp981b61aac6d0469694fc5ed31ef41b37.jpg",
+    "url": "https://www.lidl.fr/p/parkside-debroussailleuse-thermique-pbs-2-f6-42-7-cm-1-8-ch/p100405631",
+    "price": "84",
+    "currencySymbol": "€",
+    "description": "Vitesse de rotation à vide: 9300/9500 tr/min Largeur de coupe: 25,5 / 43 cm",
+    "categoryPrimaryPath": "0/41/4110/411012/41101220"
+   },
+   "01a03e3b-7ead-73a4-9fe4-4b4b6dac74fd": {
+    "productId": "100408657",
+    "title": "PARKSIDE® Souffleur de feuilles thermique, PBRLB 52 A1",
+    "brand": "PARKSIDE®",
+    "currencyText": "EUR",
+    "wonCategoryPrimary": "Mondes de besoins/Bricolage & Jardinage/Outils de jardinage",
+    "wonCategoryPrimaryPath": "0/12/1212",
+    "canonicalUrl": "/p/parkside-souffleur-de-feuilles-thermique-pbrlb-52-a1/p100408657",
+    "categoryPrimary": "Assortiment/Bricoler/Jardin & barbecue/Outillage & machines de jardinage/Aspirateurs & souffleurs de feuilles",
+    "image": "https://www.lidl.fr/assets/gcpada7fc5f652f406dbd715de57771fb49.jpg",
+    "url": "https://www.lidl.fr/p/parkside-souffleur-de-feuilles-thermique-pbrlb-52-a1/p100408657",
+    "price": "84",
+    "currencySymbol": "€",
+    "description": "Puissance : max. 1600 W Vitesse à vide : env. 3000 min⁻&sup1; Vitesse de l'air : buse plate env. 290 km/h, buse ronde env. 230 km/h",
+    "categoryPrimaryPath": "0/41/4110/411012/41101215"
+   },
+   "01a03e3c-04bc-7b59-aa79-e1516a41c49b": {
+    "productId": "100409465",
+    "title": "PARKSIDE PERFORMANCE® Souffleur de feuilles à turbine sans fil, 40 V PPATLB 40 A1, sans batteries - sans chargeur",
+    "brand": "PARKSIDE PERFORMANCE®",
+    "currencyText": "EUR",
+    "wonCategoryPrimary": "Mondes de besoins/Bricolage & Jardinage/Outils de jardinage",
+    "wonCategoryPrimaryPath": "0/12/1212",
+    "canonicalUrl": "/p/parkside-performance-souffleur-de-feuilles-a-turbine-sans-fil-40-v-ppatlb-40-a1-sans-batteries-sans-chargeur/p100409465",
+    "categoryPrimary": "Assortiment/Bricoler/Jardin & barbecue/Outillage & machines de jardinage/Aspirateurs & souffleurs de feuilles",
+    "image": "https://www.lidl.fr/assets/gcp30a9b63e9bc14f99b7dc5bd8ea35e94a.jpg",
+    "url": "https://www.lidl.fr/p/parkside-performance-souffleur-de-feuilles-a-turbine-sans-fil-40-v-ppatlb-40-a1-sans-batteries-sans-chargeur/p100409465",
+    "price": "44.99",
+    "currencySymbol": "€",
+    "description": "De la série PARKSIDE PERFORMANCE Vitesse de l'air : max. 250 km/h Vitesse à vide : 9000&ndash;26000 min-1",
+    "categoryPrimaryPath": "0/41/4110/411012/41101215"
+   }
+  },
+  "notifications": [],
+  "relatedFlyers": []
+ }
+}

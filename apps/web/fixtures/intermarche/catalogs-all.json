@@ -1,0 +1,52 @@
+[
+ {
+  "campaign": {
+   "name": "TF PRE ANNIVERSAIRE",
+   "label": "C'est notre anniversaire !",
+   "description": "error",
+   "urlStoreType": null,
+   "storeFormat": "",
+   "designation": "2755708092026-984puRgB",
+   "coverUrl": "https://medias-prod-intermarche.e-catalogues.pro/images/452x640/2755708092026-984puRgB-138969/cover.jpg",
+   "local": false,
+   "startCampaignDate": "2026-09-08T02:00:00",
+   "endCampaignDate": "2026-09-20T23:59:00",
+   "requiredStore": null,
+   "contentThematic": [
+    ""
+   ],
+   "thematic": ""
+  },
+  "catalog": {
+   "versionType": "V1",
+   "startVersionDate": "2026-09-08T02:00:00",
+   "endVersionDate": "2026-09-20T23:59:00",
+   "coverUrl": "https://medias-prod-intermarche.e-catalogues.pro/images/452x640/2755708092026-984puRgB-138969/cover.jpg"
+  }
+ },
+ {
+  "campaign": {
+   "name": "EVEN FOIRE AUX VINS AUTOMNE",
+   "label": "Foire aux vins",
+   "description": "error",
+   "urlStoreType": null,
+   "storeFormat": "",
+   "designation": "2755808092026-NVuEg7Mv",
+   "coverUrl": "https://medias-prod-intermarche.e-catalogues.pro/images/452x640/2755808092026-NVuEg7Mv-128673/cover.jpg",
+   "local": false,
+   "startCampaignDate": "2026-09-08T02:00:00",
+   "endCampaignDate": "2026-09-27T23:59:00",
+   "requiredStore": null,
+   "contentThematic": [
+    ""
+   ],
+   "thematic": ""
+  },
+  "catalog": {
+   "versionType": "V1",
+   "startVersionDate": "2026-09-08T02:00:00",
+   "endVersionDate": "2026-09-27T23:59:00",
+   "coverUrl": "https://medias-prod-intermarche.e-catalogues.pro/images/452x640/2755808092026-NVuEg7Mv-128673/cover.jpg"
+  }
+ }
+]

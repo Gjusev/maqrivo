@@ -1,0 +1,128 @@
+{
+ "self": "v4/overview?client_locale=lidl%2Ffr-FR",
+ "version": 4,
+ "success": true,
+ "message": "11 flyers in 3 subcategories and 1 categories found.",
+ "dateTime": "2026-09-05T11:52:56+00:00",
+ "numberOfEntries": 1,
+ "isRegionalized": true,
+ "categories": [
+  {
+   "id": "eceb5d0b-f298-11e6-aabb-005056ab0fb6",
+   "name": "HHZ FR fr-FR",
+   "subcategories": [
+    {
+     "id": "919f7bd6-0886-11ef-ab69-fa163fa6f8af",
+     "name": "Les promos de la semaine",
+     "flyers": [
+      {
+       "id": "01a03e2c-1afa-7c7c-9ae6-f4c9f761c4cb",
+       "name": "Du 03/09 au 09/09",
+       "title": "Les promos de la semaine",
+       "isActive": true,
+       "pdfUrl": "https://assets.leaflets.schwarz/leaflets/pdfs/01a03e2c-1afa-7c7c-9ae6-f4c9f761c4cb/Du-03-09-au-09-09-Les-promos-de-la-semaine-00.pdf",
+       "enableSharing": true,
+       "enableDownload": true,
+       "hiResPdfUrl": "https://assets.leaflets.schwarz/leaflets/pdfs/01a03e2c-1afa-7c7c-9ae6-f4c9f761c4cb/Du-03-09-au-09-09-Les-promos-de-la-semaine-00.pdf",
+       "hiResFileSize": 36738839,
+       "fileSize": 36738839,
+       "thumbnailUrl": "https://imgproxy.leaflets.schwarz/nzgEwJTVDFbAaRcF0YCNV_Vyxh3tuar9tR8pkZGZoN0/rs:fit:400:400:1/g:no/czM6Ly9sZWFmbGV0cy9pbWFnZXMvMDFhMDNlMmMtMWFmYS03YzdjLTlhZTYtZjRjOWY3NjFjNGNiL3BhZ2UtMDFfZmI4NGQ1MDJiZjQ3NjBkZDI4OTA2NzM1NGMxZjc0NDQucG5n.jpg",
+       "publicThumbnail": "https://imgproxy.leaflets.schwarz/nzgEwJTVDFbAaRcF0YCNV_Vyxh3tuar9tR8pkZGZoN0/rs:fit:400:400:1/g:no/czM6Ly9sZWFmbGV0cy9pbWFnZXMvMDFhMDNlMmMtMWFmYS03YzdjLTlhZTYtZjRjOWY3NjFjNGNiL3BhZ2UtMDFfZmI4NGQ1MDJiZjQ3NjBkZDI4OTA2NzM1NGMxZjc0NDQucG5n.jpg",
+       "flyerUrlAbsolute": "https://www.lidl.fr/l/catalogue-de-la-semaine/du-03-09-au-09-09-les-promos-de-la-semaine/ar/0?_ab=1&lf=HHZ+-+F",
+       "regionAliasAbsoluteUrl": "https://www.lidl.fr/l/catalogue-de-la-semaine/du-03-09-au-09-09-les-promos-de-la-semaine/ar/0?_ab=1&lf=HHZ+-+F",
+       "flyerJson": "https://endpoints.leaflets.schwarz/v4/flyer?version=4&flyer_identifier=du-03-09-au-09-09-les-promos-de-la-semaine&client=lidl",
+       "startDate": "2026-08-27",
+       "endDate": "2026-09-09",
+       "offerStartDate": "2026-09-03",
+       "offerEndDate": "2026-09-09",
+       "status": "current",
+       "discoverable": false,
+       "target": "flyer",
+       "teasers": {
+        "teaser_666x475": "https://imgproxy.leaflets.schwarz/JRdOyHfnyNVQIldkQN6bW0vqJC0rnKDeQFufmdJ1OSo/rs:fill:666:475:1/g:no/czM6Ly9sZWFmbGV0cy9pbWFnZXMvMDFhMDNlMmMtMWFmYS03YzdjLTlhZTYtZjRjOWY3NjFjNGNiL3BhZ2UtMDFfZmI4NGQ1MDJiZjQ3NjBkZDI4OTA2NzM1NGMxZjc0NDQucG5n.jpg",
+        "teaser_2020x1440": "https://imgproxy.leaflets.schwarz/vG5hDn7RuxgAU3UCKtm6N06YbrrkZQAn1ICfg5zMLcw/rs:fill:2020:1440:1/g:no/czM6Ly9sZWFmbGV0cy9pbWFnZXMvMDFhMDNlMmMtMWFmYS03YzdjLTlhZTYtZjRjOWY3NjFjNGNiL3BhZ2UtMDFfZmI4NGQ1MDJiZjQ3NjBkZDI4OTA2NzM1NGMxZjc0NDQucG5n.jpg",
+        "teaser_w1010": "https://imgproxy.leaflets.schwarz/5XRHfzhJezkH_KbP4a9lUxRzMgxtvVTKk62bzrrArkk/rs:fit:1010:0:1/g:no/czM6Ly9sZWFmbGV0cy9pbWFnZXMvMDFhMDNlMmMtMWFmYS03YzdjLTlhZTYtZjRjOWY3NjFjNGNiL3BhZ2UtMDFfZmI4NGQ1MDJiZjQ3NjBkZDI4OTA2NzM1NGMxZjc0NDQucG5n.jpg"
+       },
+       "regions": [
+        {
+         "type": "national",
+         "code": "0"
+        }
+       ],
+       "thumbnailDimensions": {
+        "width": 236,
+        "height": 400
+       }
+      },
+      {
+       "id": "01a03ee8-a0a3-754d-9e6a-4cb0efb8886b",
+       "name": "Du 03/09 au 09/09",
+       "title": "Les promos de la semaine",
+       "isActive": true,
+       "pdfUrl": "https://assets.leaflets.schwarz/leaflets/pdfs/01a03ee8-a0a3-754d-9e6a-4cb0efb8886b/Du-03-09-au-09-09-Les-promos-de-la-semaine-01.pdf",
+       "enableSharing": true,
+       "enableDownload": true,
+       "hiResPdfUrl": "https://assets.leaflets.schwarz/leaflets/pdfs/01a03ee8-a0a3-754d-9e6a-4cb0efb8886b/Du-03-09-au-09-09-Les-promos-de-la-semaine-01.pdf",
+       "hiResFileSize": 36743598,
+       "fileSize": 36743598,
+       "thumbnailUrl": "https://imgproxy.leaflets.schwarz/25kcbRJ_hr04wjkup78J3uiYMv5-xwTudpI_XmWJgqI/rs:fit:400:400:1/g:no/czM6Ly9sZWFmbGV0cy9pbWFnZXMvMDFhMDNlZTgtYTBhMy03NTRkLTllNmEtNGNiMGVmYjg4ODZiL3BhZ2UtMDFfMTE2ZWQ4MzA1ZjBmZTdkOWNkN2M1NTg5YzIxYTI4MjQucG5n.jpg",
+       "publicThumbnail": "https://imgproxy.leaflets.schwarz/25kcbRJ_hr04wjkup78J3uiYMv5-xwTudpI_XmWJgqI/rs:fit:400:400:1/g:no/czM6Ly9sZWFmbGV0cy9pbWFnZXMvMDFhMDNlZTgtYTBhMy03NTRkLTllNmEtNGNiMGVmYjg4ODZiL3BhZ2UtMDFfMTE2ZWQ4MzA1ZjBmZTdkOWNkN2M1NTg5YzIxYTI4MjQucG5n.jpg",
+       "flyerUrlAbsolute": "https://www.lidl.fr/l/catalogue-de-la-semaine/du-03-09-au-09-09-les-promos-de-la-semaine-726b4a/ar/17?_ab=1&lf=HHZ+-+F",
+       "regionAliasAbsoluteUrl": "https://www.lidl.fr/l/catalogue-de-la-semaine/du-03-09-au-09-09-les-promos-de-la-semaine-726b4a/ar/17?_ab=1&lf=HHZ+-+F",
+       "flyerJson": "https://endpoints.leaflets.schwarz/v4/flyer?version=4&flyer_identifier=du-03-09-au-09-09-les-promos-de-la-semaine-726b4a&client=lidl",
+       "startDate": "2026-08-27",
+       "endDate": "2026-09-09",
+       "offerStartDate": "2026-09-03",
+       "offerEndDate": "2026-09-09",
+       "status": "current",
+       "discoverable": false,
+       "target": "flyer",
+       "teasers": {
+        "teaser_666x475": "https://imgproxy.leaflets.schwarz/1Q0ktNTnNIGLMIyZmRY5QKRrF-uSbqdIUqMuHeRRLos/rs:fill:666:475:1/g:no/czM6Ly9sZWFmbGV0cy9pbWFnZXMvMDFhMDNlZTgtYTBhMy03NTRkLTllNmEtNGNiMGVmYjg4ODZiL3BhZ2UtMDFfMTE2ZWQ4MzA1ZjBmZTdkOWNkN2M1NTg5YzIxYTI4MjQucG5n.jpg",
+        "teaser_2020x1440": "https://imgproxy.leaflets.schwarz/TOSQxb7pHPzcpCA22z1BuLJF30uK21-wZjxJIrhCVfI/rs:fill:2020:1440:1/g:no/czM6Ly9sZWFmbGV0cy9pbWFnZXMvMDFhMDNlZTgtYTBhMy03NTRkLTllNmEtNGNiMGVmYjg4ODZiL3BhZ2UtMDFfMTE2ZWQ4MzA1ZjBmZTdkOWNkN2M1NTg5YzIxYTI4MjQucG5n.jpg",
+        "teaser_w1010": "https://imgproxy.leaflets.schwarz/8ImF0cL_VMqEmbe-dDB6z1awF6yrkUZ6P3-qN6Gtgzg/rs:fit:1010:0:1/g:no/czM6Ly9sZWFmbGV0cy9pbWFnZXMvMDFhMDNlZTgtYTBhMy03NTRkLTllNmEtNGNiMGVmYjg4ODZiL3BhZ2UtMDFfMTE2ZWQ4MzA1ZjBmZTdkOWNkN2M1NTg5YzIxYTI4MjQucG5n.jpg"
+       },
+       "regions": [
+        {
+         "type": "offer_region",
+         "code": "17"
+        },
+        {
+         "type": "offer_region",
+         "code": "2"
+        },
+        {
+         "type": "offer_region",
+         "code": "3"
+        }
+       ],
+       "thumbnailDimensions": {
+        "width": 236,
+        "height": 400
+       }
+      }
+     ],
+     "overviewPromotions": []
+    }
+   ]
+  }
+ ],
+ "translations": {
+  "overviewWidgetLeaflets": "Catalogue",
+  "overviewWidgetDiscoverOffers": "Découvrez les nouvelles offres de la semaine !",
+  "overviewWidgetSelectStore": "Sélectionner un supermarché pour recevoir les offres de votre région",
+  "overviewWidgetToLeaflet": "Voir le catalogue",
+  "overviewWidgetOverlayHeading": "Configurez votre supermarché Lidl",
+  "overviewWidgetStoreFinderClaim": "Sélectionnez votre supermarché !",
+  "overviewWidgetStoreFinderSubClaim": "Découvrez les offres de votre région",
+  "overviewWidgetStoreFinderButtonLabel": "Découvrez plus",
+  "overviewWidgetOverlayText": "Pour consulter nos catalogues et découvrir les offres spéciales de votre région.",
+  "overviewWidgetSelectStoreClaim": "Trouvez des offres spéciales dans votre région",
+  "overviewWidgetNextPromoLabel": "Nouvelle vue",
+  "overviewWidgetNextPromoHint": "Vous trouverez le catalogue habituel sur la page de l'offre.",
+  "overviewWidgetTitle": "Découvrez nos catalogues",
+  "overviewWidgetOverlayCloseButtonText": "Fermer",
+  "overviewWidgetStoreSelection": "Sélection du magasin",
+  "overviewWidgetOverlayButtonText": "Sélectionnez votre supermarché"
+ }
+}

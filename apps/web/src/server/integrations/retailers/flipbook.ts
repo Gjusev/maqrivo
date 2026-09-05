@@ -1,10 +1,35 @@
 /**
  * Flipbook contract: how a retailer's leaflet catalogue is discovered and
- * downloaded. Concrete adapters (verified public endpoints only, ADR-0005)
- * implement a FlipbookSource and register it here; the catalogue-sync job
- * composes runs from what is registered — capability detection, not fake
- * implementations.
+ * ingested. Two modes, declared by the adapter's data:
+ * - structured items (prices/EAN straight from the retailer payload) →
+ *   promotions without any AI involvement;
+ * - page image URLs only → the pages enter the user-confirmed vision
+ *   pipeline exactly like photo uploads.
+ * Concrete adapters (verified public endpoints only, ADR-0005) register
+ * here; the catalogue-sync job composes runs from what is registered —
+ * capability detection, not fake implementations.
  */
+
+/** One deal zone extracted from the retailer's own structured data. */
+export interface RemoteCatalogueItem {
+  readonly ean: string | null;
+  readonly label: string;
+  readonly brand: string | null;
+  /** Current/promo price in cents, when the payload carries one. */
+  readonly priceCents: number | null;
+  /** Crossed-out regular price in cents. */
+  readonly regularPriceCents: number | null;
+  /** Per-kg price in cents (weight-sold items). */
+  readonly pricePerKgCents: number | null;
+  readonly packaging: string | null;
+  readonly category: string | null;
+  /** Loyalty-card offer (maps to LOYALTY_PRICE + loyaltyRequired). */
+  readonly loyalty: boolean;
+  /** Per-offer validity text printed with the deal. */
+  readonly validityText: string | null;
+  /** 1-based leaflet page the deal appears on (provenance). */
+  readonly page: number | null;
+}
 
 export interface RemoteCatalogue {
   /** Retailer-stable identifier (unique with the retailer). */
@@ -13,20 +38,36 @@ export interface RemoteCatalogue {
   /** ISO dates YYYY-MM-DD. */
   readonly validFrom: string | null;
   readonly validUntil: string | null;
-  /** Page image URLs, in leaflet order. */
+  /** Page image URLs, in leaflet order (vision mode). */
   readonly pageImageUrls: readonly string[];
+  /** Structured deals (items mode) — when present, pages are not fetched. */
+  readonly items: readonly RemoteCatalogueItem[];
 }
 
-/** Fetch the current catalogues for one store of this retailer. */
-export type FlipbookSource = (storeRef: string) => Promise<RemoteCatalogue[]>;
+/**
+ * Fetch the current catalogues. storeRef is the retailer's own store
+ * reference (e.g. Intermarché PDV code) for store-keyed sources; national
+ * sources receive null.
+ */
+export type FlipbookSource = (storeRef: string | null) => Promise<RemoteCatalogue[]>;
 
-/** slug → source. Registered by concrete adapters at module load. */
-const FLIPBOOK_SOURCES = new Map<string, FlipbookSource>();
-
-export function registerFlipbookSource(retailerSlug: string, source: FlipbookSource): void {
-  FLIPBOOK_SOURCES.set(retailerSlug, source);
+export interface FlipbookRegistration {
+  readonly source: FlipbookSource;
+  /**
+   * true: runs once per enabled store carrying externalIds[slug].
+   * false (national): runs once per run when any store of that retailer
+   * is enabled — the two-tier politeness gate still applies.
+   */
+  readonly storeKeyed: boolean;
 }
 
-export function flipbookSourceFor(retailerSlug: string): FlipbookSource | undefined {
-  return FLIPBOOK_SOURCES.get(retailerSlug);
+/** slug → registration. Registered by concrete adapters at module load. */
+const REGISTRY = new Map<string, FlipbookRegistration>();
+
+export function registerFlipbook(retailerSlug: string, registration: FlipbookRegistration): void {
+  REGISTRY.set(retailerSlug, registration);
+}
+
+export function flipbookRegistrations(): ReadonlyMap<string, FlipbookRegistration> {
+  return REGISTRY;
 }
