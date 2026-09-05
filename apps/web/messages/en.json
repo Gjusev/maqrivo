@@ -322,7 +322,9 @@
     "trendDown": "Falling",
     "trendFlat": "Stable",
     "cheaperThanSeen": "Cheaper than {pct} % of prices seen here",
-    "pricierThanSeen": "More expensive than {pct} % of prices seen here"
+    "pricierThanSeen": "More expensive than {pct} % of prices seen here",
+    "per100g": "Per 100 g",
+    "per100ml": "Per 100 ml"
   },
   "Recipes": {
     "title": "Recipes",
@@ -339,7 +341,9 @@
     "tags": "Tags",
     "cuisine": "Cuisine",
     "noRecipes": "No recipes — create one or generate with AI",
-    "searchPlaceholder": "Search recipes"
+    "searchPlaceholder": "Search recipes",
+    "ingredients": "Ingredients",
+    "instructions": "Steps"
   },
   "Profile": {
     "title": "Profile",
@@ -427,7 +431,8 @@
     "notFound": "Not found",
     "validation": "Check the highlighted fields",
     "solverUnavailable": "The solver is unavailable — try again later",
-    "rateLimited": "Too many requests — wait a moment"
+    "rateLimited": "Too many requests — wait a moment",
+    "error": "Something went wrong — try again"
   },
   "Admin": {
     "title": "Ingestion",

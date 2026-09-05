@@ -94,7 +94,7 @@ export default function NewProductPage() {
           <input id="name" name="name" required minLength={2} />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="brand">{t("brand")}</label>
             <input id="brand" name="brand" />
@@ -105,7 +105,7 @@ export default function NewProductPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="mode">{t("packageSize")}</label>
             <select id="mode" value={mode} onChange={(e) => setMode(e.target.value as typeof mode)}>
@@ -194,7 +194,7 @@ export default function NewProductPage() {
 
         <fieldset className="rounded-lg border border-zinc-200 p-3">
           <legend className="px-1 text-sm font-medium text-zinc-700">{t("per100g")}</legend>
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div>
               <label htmlFor="kcal">{t("kcal")}</label>
               <input id="kcal" name="kcal" inputMode="decimal" />

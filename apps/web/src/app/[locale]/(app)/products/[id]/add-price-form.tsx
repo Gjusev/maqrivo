@@ -62,7 +62,7 @@ export function AddPriceForm({ productId }: { productId: string }) {
     <section className="card p-4">
       <h2 className="text-sm font-semibold text-zinc-900">{t("addPriceTitle")}</h2>
       <form onSubmit={handleSubmit} className="mt-3 space-y-3">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <label htmlFor="storeId">{t("store")}</label>
             <select id="storeId" name="storeId" required>
@@ -85,7 +85,7 @@ export function AddPriceForm({ productId }: { productId: string }) {
             </select>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <label htmlFor="amount">{t("priceAmount")}</label>
             <input id="amount" name="amount" inputMode="decimal" required placeholder="2,49" />

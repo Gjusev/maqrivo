@@ -47,7 +47,7 @@ export function NewCatalogueButton({ variant = "secondary" }: { variant?: "prima
           <div className="relative w-full max-w-md rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl">
             <h2 className="text-lg font-bold text-zinc-900">{t("addCatalogue")}</h2>
             <form onSubmit={handleSubmit} className="mt-4 space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label htmlFor="cat-retailer">{t("retailerTitle")}</label>
                   <select id="cat-retailer" name="retailer" defaultValue="carrefour">
@@ -63,7 +63,7 @@ export function NewCatalogueButton({ variant = "secondary" }: { variant?: "prima
                   <input id="cat-title" name="title" placeholder="Promos de la semaine" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label htmlFor="cat-from">{t("validFromLabel")}</label>
                   <input id="cat-from" name="validFrom" type="date" />

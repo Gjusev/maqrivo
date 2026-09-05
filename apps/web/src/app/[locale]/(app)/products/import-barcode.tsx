@@ -80,8 +80,8 @@ export function ImportBarcode() {
 
   return (
     <div className="card p-4">
-      <div className="flex gap-2">
-        <div className="relative flex-1">
+      <div className="flex flex-wrap gap-2">
+        <div className="relative min-w-[60%] flex-1">
           <BarcodeIcon size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" aria-hidden />
           <input
             value={barcode}
@@ -105,7 +105,7 @@ export function ImportBarcode() {
         </button>
         <button
           type="button"
-          className="btn-primary shrink-0"
+          className="btn-primary shrink-0 flex-1 justify-center sm:flex-none"
           disabled={pending || barcode.length < 6}
           onClick={() => void importBarcode(barcode)}
         >

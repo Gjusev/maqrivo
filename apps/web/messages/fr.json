@@ -322,7 +322,9 @@
     "trendDown": "En baisse",
     "trendFlat": "Stable",
     "cheaperThanSeen": "Moins cher que {pct} % des prix vus ici",
-    "pricierThanSeen": "Plus cher que {pct} % des prix vus ici"
+    "pricierThanSeen": "Plus cher que {pct} % des prix vus ici",
+    "per100g": "Pour 100 g",
+    "per100ml": "Pour 100 ml"
   },
   "Recipes": {
     "title": "Recettes",
@@ -339,7 +341,9 @@
     "tags": "Étiquettes",
     "cuisine": "Cuisine",
     "noRecipes": "Aucune recette — créez-en une ou générez-la avec l'IA",
-    "searchPlaceholder": "Rechercher une recette"
+    "searchPlaceholder": "Rechercher une recette",
+    "ingredients": "Ingrédients",
+    "instructions": "Étapes"
   },
   "Profile": {
     "title": "Profil",
@@ -427,7 +431,8 @@
     "notFound": "Introuvable",
     "validation": "Vérifiez les champs en erreur",
     "solverUnavailable": "Le solveur est indisponible — réessayez plus tard",
-    "rateLimited": "Trop de requêtes — patientez un instant"
+    "rateLimited": "Trop de requêtes — patientez un instant",
+    "error": "Une erreur est survenue — réessayez"
   },
   "Admin": {
     "title": "Ingestion",

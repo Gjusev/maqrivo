@@ -78,7 +78,7 @@ export function NewPromotionButton({ variant = "secondary" }: { variant?: "prima
           <div className="relative max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl">
             <h2 className="text-lg font-bold text-zinc-900">{t("addPromo")}</h2>
             <form onSubmit={handleSubmit} className="mt-4 space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label htmlFor="retailer">{t("retailer")}</label>
                   <select id="retailer" name="retailer" defaultValue="carrefour">
@@ -110,7 +110,7 @@ export function NewPromotionButton({ variant = "secondary" }: { variant?: "prima
                 <input id="brand" name="brand" />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {mechanism === "PROMO_PRICE" || mechanism === "LOYALTY_PRICE" ? (
                   <div>
                     <label htmlFor="promoPrice">{t("promoPriceLabel")}</label>

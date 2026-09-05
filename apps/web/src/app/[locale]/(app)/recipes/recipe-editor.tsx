@@ -115,7 +115,7 @@ export function RecipeEditor({ initial }: { initial?: RecipeEditorInitial }) {
 
   return (
     <form onSubmit={handleSubmit} className="card space-y-4 p-5">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="nameFr">{t("nameFr")}</label>
           <input id="nameFr" name="nameFr" defaultValue={initial?.nameFr ?? ""} />

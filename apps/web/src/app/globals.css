@@ -50,6 +50,14 @@
       placeholder:text-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20;
   }
 
+  /* Fill the cell and shrink with it — native inputs have a ~170px
+     intrinsic width that overflows narrow grid/flex rows otherwise. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  select,
+  textarea {
+    @apply w-full min-w-0;
+  }
+
   label {
     @apply mb-1.5 block text-sm font-medium text-zinc-700;
   }
