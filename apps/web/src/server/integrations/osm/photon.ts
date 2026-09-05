@@ -49,8 +49,11 @@ export async function geocode(query: string, endpoint: string, bias?: { lat: num
 }
 
 export async function reverseGeocode(lat: number, lng: number, endpoint: string): Promise<string | null> {
+  // Photon serves reverse lookups at the host root (/reverse), while the
+  // configured endpoint usually points at the forward-search base (/api).
+  const base = endpoint.replace(/\/+$/, "").replace(/\/api$/, "");
   const json = await politeFetchJson<unknown>(
-    `${endpoint}/reverse?lat=${lat}&lon=${lng}&lang=fr&limit=1`,
+    `${base}/reverse?lat=${lat}&lon=${lng}&lang=fr&limit=1`,
     { source: "photon" },
   );
   const parsed = photonResponse.safeParse(json);
