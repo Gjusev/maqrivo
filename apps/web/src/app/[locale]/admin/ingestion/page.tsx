@@ -24,6 +24,7 @@ export default async function AdminIngestionPage() {
         <div className="flex gap-2">
           <TriggerButton jobKey="promotion-expiry" />
           <TriggerButton jobKey="openprices-sync" />
+          <TriggerButton jobKey="catalogue-sync" />
         </div>
       </div>
 
