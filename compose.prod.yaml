@@ -7,7 +7,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: postgres://maqrivo:${POSTGRES_PASSWORD}@db:5432/maqrivo
       SIGNUP_INVITE_CODE: ${SIGNUP_INVITE_CODE}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
       APP_URL: ${APP_URL}
@@ -17,6 +17,7 @@ services:
       ZAI_VISION_MODEL: ${ZAI_VISION_MODEL:-glm-5.3-flash}
       OVERPASS_ENDPOINT: ${OVERPASS_ENDPOINT:-https://overpass-api.de/api/interpreter}
       PHOTON_ENDPOINT: ${PHOTON_ENDPOINT:-https://photon.komoot.io/api}
+      SEED_ON_BOOT: ${SEED_ON_BOOT:-true}
       SOLVER_DIR: /opt/solver
     depends_on:
       db:

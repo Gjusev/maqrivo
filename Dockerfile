@@ -23,6 +23,16 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN corepack enable && pnpm --filter @maqrivo/web build
 
+# ── Boot scripts (self-contained: drizzle + pg bundled by esbuild) ──────────
+FROM base AS bootstrap
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages ./packages
+COPY packages/db/src ./packages/db/src
+RUN node_modules/.bin/esbuild packages/db/src/scripts/migrate-run.ts \
+      --bundle --platform=node --format=cjs --outfile=/opt/bootstrap/migrate.cjs \
+ && node_modules/.bin/esbuild packages/db/src/seed/run.ts \
+      --bundle --platform=node --format=cjs --outfile=/opt/bootstrap/seed.cjs
+
 # ── Solver venv ─────────────────────────────────────────────────────────────
 FROM base AS solver
 COPY solver/ /opt/solver/
@@ -38,12 +48,14 @@ COPY --from=build --chown=maqrivo:maqrivo /app/apps/web/.next/standalone ./
 COPY --from=build --chown=maqrivo:maqrivo /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=build --chown=maqrivo:maqrivo /app/apps/web/public ./apps/web/public
 COPY --from=solver --chown=maqrivo:maqrivo /opt/solver /opt/solver
-# Drizzle migrations for entrypoint
+# Schema bootstrap: SQL migrations + self-contained migrate/seed bundles.
 COPY --from=build --chown=maqrivo:maqrivo /app/packages/db/drizzle /opt/migrations
-ENV SOLVER_DIR=/opt/solver
+COPY --from=bootstrap --chown=maqrivo:maqrivo /opt/bootstrap /opt/bootstrap
+COPY --chown=maqrivo:maqrivo apps/web/scripts/docker-entrypoint.cjs /opt/bootstrap/docker-entrypoint.cjs
+ENV SOLVER_DIR=/opt/solver MIGRATIONS_DIR=/opt/migrations
 
 USER maqrivo
 EXPOSE 3000
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s \
   CMD curl -fsS http://localhost:3000/api/health || exit 1
-CMD ["node", "apps/web/server.js"]
+ENTRYPOINT ["node", "/opt/bootstrap/docker-entrypoint.cjs"]
