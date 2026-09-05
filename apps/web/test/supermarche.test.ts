@@ -57,7 +57,7 @@ describe("supermarche.com directory client", () => {
 
 describe("photon reverse path", () => {
   it("calls /reverse at the host root even when the endpoint points at /api", async () => {
-    const fetchMock = vi.fn(async (_input: unknown) =>
+    const fetchMock = vi.fn(async (_input?: unknown) =>
       Response.json({
         features: [
           {

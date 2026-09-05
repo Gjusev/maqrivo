@@ -82,13 +82,18 @@ export default async function StoresPage() {
         <div className="space-y-6">
           <StoresMap
             home={session.homeLat != null && session.homeLng != null ? { lat: session.homeLat, lng: session.homeLng } : null}
-            stores={visible.slice(0, 200).map((r) => ({
+            stores={visible.slice(0, 400).map((r) => ({
               id: r.store.id,
               name: r.store.name,
+              retailer: r.retailerName ?? null,
+              format: r.store.format,
               lat: r.store.lat,
               lng: r.store.lng,
               enabled: r.prefs.enabled,
+              favorite: r.prefs.favorite,
+              avoided: r.prefs.avoided,
               custom: r.store.ownerUserId !== null,
+              distanceLabel: r.prefs.distanceM != null ? formatDistance(r.prefs.distanceM) : null,
             }))}
           />
 

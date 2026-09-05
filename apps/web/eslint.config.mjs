@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Plain Node boot scripts: no React/TS module rules apply.
+    "scripts/*.cjs",
   ]),
 ]);
 

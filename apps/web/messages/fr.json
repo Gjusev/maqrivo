@@ -150,7 +150,10 @@
     "noShoppingPlan": "Générez d'abord un plan de repas",
     "empty": "Rien à acheter — votre plan est couvert par le garde-manger",
     "uncoveredTitle": "Non couvert — aucun produit avec prix connu",
-    "uncoveredHint": "Ajoutez des produits et des prix pour que l'optimiseur puisse couvrir ces aliments."
+    "uncoveredHint": "Ajoutez des produits et des prix pour que l'optimiseur puisse couvrir ces aliments.",
+    "routeMap": "Itinéraire conseillé",
+    "showMap": "Afficher la carte",
+    "hideMap": "Masquer la carte"
   },
   "Offers": {
     "title": "Promos",
@@ -210,7 +213,7 @@
   },
   "Stores": {
     "title": "Magasins",
-    "nearby": "À proximité",
+    "nearby": "à proximité",
     "custom": "Mes magasins",
     "addCustom": "Ajouter un magasin",
     "name": "Nom",
@@ -225,10 +228,10 @@
     "organic": "bio",
     "bulk": "vrac",
     "cheap": "économique",
-    "favorite": "Favori",
+    "favorite": "favoris",
     "avoid": "À éviter",
     "enable": "Activer le suivi",
-    "enabled": "Suivi activé",
+    "enabled": "suivis",
     "disabled": "Suivi désactivé",
     "enabledHint": "Seuls les magasins activés sont suivis et optimisés",
     "discovered": "Découvert automatiquement",
@@ -269,7 +272,9 @@
     },
     "searchStores": "Rechercher un magasin…",
     "noStoreMatches": "Aucun magasin ne correspond à cette recherche.",
-    "moreStores": "+ {count} magasins plus éloignés — affinez avec la recherche."
+    "moreStores": "+ {count} magasins plus éloignés — affinez avec la recherche.",
+    "avoided": "évités",
+    "disable": "Désactiver le suivi"
   },
   "Products": {
     "title": "Produits",
@@ -509,7 +514,9 @@
     "confirmed": "Offres confirmées",
     "seePage": "Voir la page",
     "validFromLabel": "Du",
-    "validUntilLabel": "Au"
+    "validUntilLabel": "Au",
+    "confirmAll": "Tout confirmer",
+    "confirming": "Confirmation…"
   },
   "SettingsPage": {
     "exportData": "Exporter mes données (JSON)",

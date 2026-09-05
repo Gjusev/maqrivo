@@ -150,7 +150,10 @@
     "noShoppingPlan": "Generate a meal plan first",
     "empty": "Nothing to buy — your plan is covered by the pantry",
     "uncoveredTitle": "Uncovered — no priced products",
-    "uncoveredHint": "Add products and prices so the optimizer can cover these foods."
+    "uncoveredHint": "Add products and prices so the optimizer can cover these foods.",
+    "routeMap": "Recommended route",
+    "showMap": "Show map",
+    "hideMap": "Hide map"
   },
   "Offers": {
     "title": "Offers",
@@ -210,7 +213,7 @@
   },
   "Stores": {
     "title": "Stores",
-    "nearby": "Nearby",
+    "nearby": "nearby",
     "custom": "My stores",
     "addCustom": "Add a store",
     "name": "Name",
@@ -225,10 +228,10 @@
     "organic": "organic",
     "bulk": "bulk",
     "cheap": "budget",
-    "favorite": "Favorite",
+    "favorite": "favorites",
     "avoid": "Avoid",
     "enable": "Enable tracking",
-    "enabled": "Tracking enabled",
+    "enabled": "followed",
     "disabled": "Tracking disabled",
     "enabledHint": "Only enabled stores are tracked and optimized",
     "discovered": "Discovered automatically",
@@ -269,7 +272,9 @@
     },
     "searchStores": "Search a store…",
     "noStoreMatches": "No store matches this search.",
-    "moreStores": "+ {count} farther stores — refine with the search."
+    "moreStores": "+ {count} farther stores — refine with the search.",
+    "avoided": "avoided",
+    "disable": "Stop following"
   },
   "Products": {
     "title": "Products",
@@ -509,7 +514,9 @@
     "confirmed": "Confirmed offers",
     "seePage": "View the page",
     "validFromLabel": "From",
-    "validUntilLabel": "Until"
+    "validUntilLabel": "Until",
+    "confirmAll": "Confirm all",
+    "confirming": "Confirming…"
   },
   "SettingsPage": {
     "exportData": "Export my data (JSON)",

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { candidatesFromExtraction, classifyMechanism, eurosToCents } from "../src/server/catalogues/extraction";
+import { candidatesFromExtraction, classifyMechanism, eurosToCents, parsePrintedDate } from "../src/server/catalogues/extraction";
 import type { VisionCandidate } from "../src/server/catalogues/extraction";
 
 const asCandidate = (v: Record<string, unknown>): VisionCandidate =>
@@ -88,6 +88,42 @@ describe("candidatesFromExtraction (fixture-shaped vision output)", () => {
     expect(candidates[3]!.mechanism).toBe("LOYALTY_PRICE");
   });
 
+  it("maps v2 fields: packSize and printed end dates", () => {
+    const candidates = candidatesFromExtraction({
+      items: [
+        { description: "Café moulu", promoPrice: "5,99 €", packSize: "500 g", validUntil: "18/09/2026" },
+        { description: "Soda cola", promoPrice: "1,99 €", packSize: "6x330 ml", validUntil: "18/09" },
+        { description: "Beurre", promoPrice: "2,10 €" },
+      ],
+    });
+    expect(candidates[0]).toMatchObject({ packSize: "500 g", validUntil: "2026-09-18" });
+    expect(candidates[1]).toMatchObject({ packSize: "6x330 ml", validUntil: "2026-09-18" }); // year inferred
+    expect(candidates[2]).toMatchObject({ packSize: null, validUntil: null });
+  });
+});
+
+describe("parsePrintedDate", () => {
+  it("normalizes ISO, full and short French dates", () => {
+    expect(parsePrintedDate("2026-09-18")).toBe("2026-09-18");
+    expect(parsePrintedDate("18/09/2026")).toBe("2026-09-18");
+    expect(parsePrintedDate("5/10/26")).toBe("2026-10-05");
+  });
+
+  it("infers the year for day/month-only prints (leaflets look forward)", () => {
+    const now = new Date();
+    const futureMonth = ((now.getMonth() + 7) % 12) + 1; // ~7 months ahead
+    const result = parsePrintedDate(`01/${String(futureMonth).padStart(2, "0")}`);
+    expect(result).toBe(`${String(now.getFullYear())}-${String(futureMonth).padStart(2, "0")}-01`);
+  });
+
+  it("rejects non-dates", () => {
+    expect(parsePrintedDate("prix")).toBeNull();
+    expect(parsePrintedDate(null)).toBeNull();
+    expect(parsePrintedDate("18-13")).toBeNull();
+  });
+});
+
+describe("candidatesFromExtraction robustness", () => {
   it("returns [] on garbage", () => {
     expect(candidatesFromExtraction({ nothing: true })).toEqual([]);
     expect(candidatesFromExtraction("oops")).toEqual([]);

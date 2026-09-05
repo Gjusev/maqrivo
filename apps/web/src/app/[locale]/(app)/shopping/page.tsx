@@ -9,6 +9,7 @@ import { formatMoney } from "@maqrivo/core";
 import { BasketIcon } from "@phosphor-icons/react/dist/ssr/Basket";
 import { Link } from "@/i18n/navigation";
 import { ShoppingItemRow } from "./shopping-item-row";
+import { RouteMap } from "./route-map";
 
 export default async function ShoppingPage() {
   const t = await getTranslations("Shopping");
@@ -128,6 +129,24 @@ export default async function ShoppingPage() {
           </p>
         ) : null}
       </div>
+
+      {storeRows.length > 0 ? (
+        <div className="mb-4">
+          <RouteMap
+            home={session.homeLat != null && session.homeLng != null ? { lat: session.homeLat, lng: session.homeLng } : null}
+            stops={storeRows.map(({ sps, store: s }) => ({
+              sequenceIndex: sps.sequenceIndex,
+              name: s.name,
+              lat: s.lat,
+              lng: s.lng,
+              itemCount: items.filter((i) => i.item.storeId === s.id).length,
+              totalCents: items
+                .filter((i) => i.item.storeId === s.id)
+                .reduce((sum, i) => sum + i.item.effectiveCostCents, 0),
+            }))}
+          />
+        </div>
+      ) : null}
 
       {storeRows.length > 1 ? (
         <p className="mb-3 text-xs font-medium text-zinc-500">

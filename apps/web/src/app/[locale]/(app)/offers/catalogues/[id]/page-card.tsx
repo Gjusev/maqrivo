@@ -51,6 +51,7 @@ export function PageCard({
   const [extracting, setExtracting] = useState(false);
   const [extractError, setExtractError] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState<Record<number, string>>({});
+  const [bulkPending, setBulkPending] = useState(false);
   const [basketAdded, setBasketAdded] = useState<Record<number, boolean>>({});
   const [validUntil, setValidUntil] = useState(defaultValidUntil ?? "");
   const [fallbackUntil] = useState(() => new Date(Date.now() + 9 * 86_400_000).toISOString().slice(0, 10));
@@ -61,12 +62,16 @@ export function PageCard({
     const result = await extractPageAction(pageId);
     setExtracting(false);
     if (result.ok) {
-      setCandidates(result.candidates ?? []);
-      if (!validUntil) {
+      const list = result.candidates ?? [];
+      setCandidates(list);
+      // Prefer the validity printed on the leaflet itself when the model
+      // read one; fall back to the 9-day heuristic.
+      const printed = list.map((c) => c.validUntil).find((d) => typeof d === "string");
+      setValidUntil(printed ?? validUntil ?? (() => {
         const inNineDays = new Date();
         inNineDays.setDate(inNineDays.getDate() + 9);
-        setValidUntil(inNineDays.toISOString().slice(0, 10));
-      }
+        return inNineDays.toISOString().slice(0, 10);
+      })());
     } else if (result.error === "ai-not-configured") {
       setExtractError(t("aiNotConfigured"));
     } else {
@@ -93,6 +98,17 @@ export function PageCard({
       setConfirmed((prev) => ({ ...prev, [candidate.index]: result.promotionId! }));
       router.refresh();
     }
+  }
+
+  /** A leaflet page often carries 10+ offers; confirm the whole page in one tap. */
+  async function confirmAll() {
+    if (!candidates) return;
+    const pending = candidates.filter((c) => !confirmed[c.index]);
+    setBulkPending(true);
+    for (const candidate of pending) {
+      await confirm(candidate);
+    }
+    setBulkPending(false);
   }
 
   async function addToBasket(candidateIndex: number) {
@@ -159,7 +175,7 @@ export function PageCard({
             <p className="text-sm text-zinc-500">{t("noCandidates")}</p>
           ) : (
             <>
-              <div className="mb-2 flex items-center gap-2">
+              <div className="mb-2 flex flex-wrap items-center gap-2">
                 <label htmlFor={`valid-${pageId}`} className="text-xs text-zinc-500">
                   {t("validity")}
                 </label>
@@ -170,6 +186,17 @@ export function PageCard({
                   value={validUntil}
                   onChange={(e) => setValidUntil(e.target.value)}
                 />
+                {candidates.some((c) => !confirmed[c.index]) ? (
+                  <button
+                    type="button"
+                    className="btn-secondary ml-auto min-h-9 px-3 text-xs"
+                    disabled={bulkPending}
+                    onClick={() => void confirmAll()}
+                  >
+                    <CheckIcon size={14} aria-hidden />
+                    {bulkPending ? t("confirming") : t("confirmAll")}
+                  </button>
+                ) : null}
               </div>
               <ul className="rise-in space-y-2">
                 {candidates.map((candidate) => {
@@ -182,6 +209,7 @@ export function PageCard({
                         <p className="mt-0.5 text-xs text-zinc-500">
                           {[
                             candidate.brand,
+                            candidate.packSize,
                             MECHANISM_LABELS[candidate.mechanism] ?? "",
                             candidate.position ?? "",
                           ]
@@ -191,7 +219,14 @@ export function PageCard({
                         <p className="mt-0.5 text-sm">
                           <span className="font-semibold text-brand-700">{money(candidate.promoPriceCents ?? candidate.regularPriceCents, locale)}</span>
                           {candidate.regularPriceCents && candidate.promoPriceCents ? (
-                            <span className="ml-1.5 text-xs text-zinc-400 line-through">{money(candidate.regularPriceCents, locale)}</span>
+                            <>
+                              <span className="ml-1.5 text-xs text-zinc-400 line-through">{money(candidate.regularPriceCents, locale)}</span>
+                              {candidate.promoPriceCents < candidate.regularPriceCents ? (
+                                <span className="ml-1.5 rounded-full bg-red-100 px-1.5 py-0.5 text-xs font-semibold text-red-700">
+                                  -{String(Math.round((1 - candidate.promoPriceCents / candidate.regularPriceCents) * 100))} %
+                                </span>
+                              ) : null}
+                            </>
                           ) : null}
                           {candidate.pricePerKgCents ? (
                             <span className="ml-1.5 text-xs text-zinc-500">{money(candidate.pricePerKgCents, locale)}/kg</span>

@@ -37,6 +37,10 @@ export const visionExtractionSchema = z.object({
         mechanicPhrase: z.string().max(80).nullish(),
         loyalty: z.union([z.boolean(), z.literal("true"), z.literal("false")]).nullish().transform((v) => v === true || v === "true"),
         position: z.unknown().nullish(),
+        /** Printed pack size, verbatim ("500 g", "6x330 ml", "1L"). */
+        packSize: z.string().max(40).nullish(),
+        /** Printed offer end date, verbatim ("18/09", "18/09/2026", "2026-09-18"). */
+        validUntil: z.string().max(20).nullish(),
       }),
     )
     .max(20),
@@ -69,6 +73,33 @@ export interface CatalogueCandidate {
   bundleQty: number | null;
   loyalty: boolean;
   position: "top" | "middle" | "bottom" | null;
+  /** Printed pack size ("500 g"), normalized end date ("2026-09-18") or null. */
+  packSize: string | null;
+  validUntil: string | null;
+}
+
+/**
+ * Leaflets print end dates as "18/09", "18/09/2026" or ISO. Normalize to
+ * "YYYY-MM-DD"; a missing year is inferred (past-by-6+months → next year —
+ * leaflets look forward). Null when nothing date-shaped exists.
+ */
+export function parsePrintedDate(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  const dmy = /^(\d{1,2})[/.](\d{1,2})(?:[/.](\d{2,4}))?$/.exec(value.trim());
+  if (!dmy) return null;
+  const day = dmy[1]!.padStart(2, "0");
+  const month = dmy[2]!.padStart(2, "0");
+  let year = dmy[3] ? (dmy[3].length === 2 ? `20${dmy[3]}` : dmy[3]) : null;
+  if (year === null) {
+    const now = new Date();
+    const candidate = Number(now.getFullYear());
+    // If that month/day is >6 months in the past, the leaflet means next year.
+    const diff = Number(month) * 100 + Number(day) - (Number(String(now.getMonth() + 1).padStart(2, "0")) * 100 + now.getDate());
+    year = String(diff < -630 ? candidate + 1 : candidate);
+  }
+  return `${year}-${month}-${day}`;
 }
 
 /** Parse 2.49 / "2,49" / "2,49 €" → cents; null when absent or ambiguous. */
@@ -127,6 +158,8 @@ export function candidatesFromExtraction(output: unknown): CatalogueCandidate[] 
         bundleQty,
         loyalty: Boolean(item.loyalty),
         position: normalizePosition(item.position),
+        packSize: item.packSize?.trim() || null,
+        validUntil: parsePrintedDate(item.validUntil),
       };
     })
     .filter((c) => c.promoPriceCents !== null || c.regularPriceCents !== null || c.pricePerKgCents !== null);
