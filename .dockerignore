@@ -1,0 +1,17 @@
+node_modules
+**/node_modules
+.git
+.next
+**/.next
+.env
+.env.*
+**/.env
+**/.env.*
+test-results
+playwright-report
+coverage
+apps/web/uploads
+solver/.venv
+solver/__pycache__
+**/__pycache__
+*.log

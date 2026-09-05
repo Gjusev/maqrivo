@@ -16,21 +16,26 @@ RUN corepack enable && pnpm install --frozen-lockfile
 
 # ── Build ───────────────────────────────────────────────────────────────────
 FROM base AS build
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
-COPY --from=deps /app/packages ./packages
+# Copy the deps tree WHOLESALE: pnpm's node_modules is a farm of relative
+# symlinks into node_modules/.pnpm — copying subdirectories severs them.
+COPY --from=deps /app ./
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN corepack enable && pnpm --filter @maqrivo/web build
+# Page-data collection imports server modules that assert DATABASE_URL at
+# module scope; the pg pool is lazy so a placeholder suffices at build time.
+ENV DATABASE_URL=postgres://build:build@localhost:5432/build
+RUN cd apps/web && node_modules/.bin/next build
 
 # ── Boot scripts (self-contained: drizzle + pg bundled by esbuild) ──────────
 FROM base AS bootstrap
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages ./packages
 COPY packages/db/src ./packages/db/src
-RUN node_modules/.bin/esbuild packages/db/src/scripts/migrate-run.ts \
+RUN ESB="$(ls node_modules/.pnpm/esbuild@*/node_modules/esbuild/bin/esbuild | head -n 1)" \
+ && test -n "$ESB" \
+ && "$ESB" packages/db/src/scripts/migrate-run.ts \
       --bundle --platform=node --format=cjs --outfile=/opt/bootstrap/migrate.cjs \
- && node_modules/.bin/esbuild packages/db/src/seed/run.ts \
+ && "$ESB" packages/db/src/seed/run.ts \
       --bundle --platform=node --format=cjs --outfile=/opt/bootstrap/seed.cjs
 
 # ── Solver venv ─────────────────────────────────────────────────────────────
