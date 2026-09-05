@@ -101,7 +101,8 @@
     "regenerateDay": "Regenerate this day",
     "emptySlot": "Pick a meal",
     "cookingTime": "Cooking time",
-    "distinctRecipes": "distinct recipes"
+    "distinctRecipes": "distinct recipes",
+    "regenerating": "Regenerating…"
   },
   "Meals": {
     "title": "Meals",

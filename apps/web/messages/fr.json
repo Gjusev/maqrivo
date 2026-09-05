@@ -101,7 +101,8 @@
     "regenerateDay": "Régénérer ce jour",
     "emptySlot": "Repas à définir",
     "cookingTime": "Temps de cuisine",
-    "distinctRecipes": "recettes différentes"
+    "distinctRecipes": "recettes différentes",
+    "regenerating": "Génération…"
   },
   "Meals": {
     "title": "Repas",

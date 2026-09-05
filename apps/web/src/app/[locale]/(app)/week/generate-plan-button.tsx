@@ -4,10 +4,12 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { runWeeklyPlanAction } from "@/server/optimization/actions";
+import { CircleNotchIcon } from "@phosphor-icons/react/dist/csr/CircleNotch";
 
 export function GeneratePlanButton({ variant = "secondary" }: { variant?: "primary" | "secondary" }) {
   const t = useTranslations("Week");
   const te = useTranslations("Errors");
+  const tr = useTranslations("Recipes");
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +30,7 @@ export function GeneratePlanButton({ variant = "secondary" }: { variant?: "prima
           } else {
             setError(
               result.error === "no-recipes"
-                ? "recipes"
+                ? tr("noRecipes")
                 : result.error === "solver-unavailable"
                   ? te("solverUnavailable")
                   : te("error"),
@@ -36,7 +38,14 @@ export function GeneratePlanButton({ variant = "secondary" }: { variant?: "prima
           }
         }}
       >
-        {pending ? "…" : t("regenerate")}
+        {pending ? (
+          <>
+            <CircleNotchIcon size={16} className="animate-spin" aria-hidden />
+            {t("regenerating")}
+          </>
+        ) : (
+          t("regenerate")
+        )}
       </button>
       {error ? <span className="text-xs text-red-600">{error}</span> : null}
     </div>
