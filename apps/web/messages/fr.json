@@ -18,7 +18,8 @@
     "more": "Plus",
     "signOut": "Se déconnecter",
     "openMenu": "Ouvrir le menu",
-    "closeMenu": "Fermer le menu"
+    "closeMenu": "Fermer le menu",
+    "assistant": "Assistant"
   },
   "Common": {
     "save": "Enregistrer",
@@ -80,7 +81,19 @@
     "dinner": "Dîner",
     "snack": "Collation",
     "pantryNotices": "À consommer bientôt",
-    "nothingExpiring": "Rien d'urgent dans le garde-manger"
+    "nothingExpiring": "Rien d'urgent dans le garde-manger",
+    "shoppingCard": "Ma liste de courses",
+    "newOffers": {
+      "title": "Nouveautés dans vos magasins",
+      "seeAll": "Tout voir"
+    },
+    "setup": {
+      "title": "Pour commencer",
+      "location": "Définissez votre position",
+      "stores": "Découvrez et activez des magasins",
+      "offers": "Attendez les prospectus ou ajoutez une offre",
+      "plan": "Générez votre premier plan"
+    }
   },
   "Week": {
     "title": "Ma semaine",
@@ -103,7 +116,9 @@
     "emptySlot": "Repas à définir",
     "cookingTime": "Temps de cuisine",
     "distinctRecipes": "recettes différentes",
-    "regenerating": "Génération…"
+    "regenerating": "Génération…",
+    "goToShopping": "Voir les courses",
+    "staleBadge": "Prix modifiés — rafraîchissement conseillé"
   },
   "Meals": {
     "title": "Repas",
@@ -153,7 +168,8 @@
     "uncoveredHint": "Ajoutez des produits et des prix pour que l'optimiseur puisse couvrir ces aliments.",
     "routeMap": "Itinéraire conseillé",
     "showMap": "Afficher la carte",
-    "hideMap": "Masquer la carte"
+    "hideMap": "Masquer la carte",
+    "goToWeek": "Voir la semaine"
   },
   "Offers": {
     "title": "Promos",
@@ -195,7 +211,11 @@
     "dealTypical": "Prix habituel",
     "dealStable": "Prix stable",
     "dealPricey": "Au-dessus de l'habituel",
-    "dealVsHistory": "vs {count, plural, =1 {# prix observé} other {# prix observés}}"
+    "dealVsHistory": "vs {count, plural, =1 {# prix observé} other {# prix observés}}",
+    "scopeMine": "Mes magasins",
+    "scopeAll": "Tous",
+    "viewAllCatalogues": "Tous les prospectus ({count})",
+    "showingOf": "{shown} sur {total}"
   },
   "Pantry": {
     "title": "Garde-manger",
@@ -274,7 +294,8 @@
     "noStoreMatches": "Aucun magasin ne correspond à cette recherche.",
     "moreStores": "+ {count} magasins plus éloignés — affinez avec la recherche.",
     "avoided": "évités",
-    "disable": "Désactiver le suivi"
+    "disable": "Désactiver le suivi",
+    "setupLocation": "Définir ma position"
   },
   "Products": {
     "title": "Produits",
@@ -338,7 +359,8 @@
     "cheaperThanSeen": "Moins cher que {pct} % des prix vus ici",
     "pricierThanSeen": "Plus cher que {pct} % des prix vus ici",
     "per100g": "Pour 100 g",
-    "per100ml": "Pour 100 ml"
+    "per100ml": "Pour 100 ml",
+    "showingOf": "{shown} sur {total}"
   },
   "Recipes": {
     "title": "Recettes",
@@ -357,7 +379,9 @@
     "noRecipes": "Aucune recette — créez-en une ou générez-la avec l'IA",
     "searchPlaceholder": "Rechercher une recette",
     "ingredients": "Ingrédients",
-    "instructions": "Étapes"
+    "instructions": "Étapes",
+    "editTitle": "Modifier la recette",
+    "showingOf": "{shown} sur {total}"
   },
   "Profile": {
     "title": "Profil",
@@ -390,7 +414,8 @@
     "travelHigh": "Éviter les détours",
     "maxCookingTime": "Temps de cuisine maximum (min)",
     "saved": "Enregistré",
-    "languageHint": "Changer de langue ne modifie aucune donnée"
+    "languageHint": "Changer de langue ne modifie aucune donnée",
+    "autoRefresh": "Rafraîchir mon plan chaque semaine (dimanche matin, conserve mes repas verrouillés)"
   },
   "Freshness": {
     "fresh": "Prix récent",
@@ -446,7 +471,11 @@
     "validation": "Vérifiez les champs en erreur",
     "solverUnavailable": "Le solveur est indisponible — réessayez plus tard",
     "rateLimited": "Trop de requêtes — patientez un instant",
-    "error": "Une erreur est survenue — réessayez"
+    "error": "Une erreur est survenue — réessayez",
+    "boundaryTitle": "Une erreur est survenue",
+    "boundaryHint": "L'erreur a été consignée. Vous pouvez réessayer.",
+    "boundaryRetry": "Réessayer",
+    "boundaryNotFound": "Page introuvable"
   },
   "Admin": {
     "title": "Ingestion",
@@ -516,7 +545,12 @@
     "validFromLabel": "Du",
     "validUntilLabel": "Au",
     "confirmAll": "Tout confirmer",
-    "confirming": "Confirmation…"
+    "confirming": "Confirmation…",
+    "structuredOnly": "Les offres de ce prospectus proviennent directement des données de l'enseigne — pas de photos de pages à consulter.",
+    "noEnabledStore": "Activez d'abord un magasin de cette enseigne — voir la page magasins.",
+    "priceRequired": "Aucun prix lisible sur cette offre — ignorez-la ou corrigez le prix.",
+    "sourceAuto": "automatique",
+    "sourcePhoto": "photo uniquement"
   },
   "SettingsPage": {
     "exportData": "Exporter mes données (JSON)",
@@ -526,7 +560,8 @@
     "deleteConfirm": "Supprimer définitivement ? Toutes vos données seront perdues.",
     "deleted": "Compte supprimé",
     "ingestion": "Ingestion (interne)",
-    "signOutHere": "Se déconnecter"
+    "signOutHere": "Se déconnecter",
+    "title": "Réglages"
   },
   "Receipts": {
     "title": "Tickets de caisse",
@@ -556,6 +591,7 @@
     "deleted": "Ticket supprimé",
     "aiNotConfigured": "Clé Z.AI requise pour l'extraction",
     "extractFailed": "L'extraction a échoué",
-    "confirmFailed": "Échec de la confirmation"
+    "confirmFailed": "Échec de la confirmation",
+    "needStores": "Ajoutez et activez d'abord un magasin pour déposer des tickets."
   }
 }
