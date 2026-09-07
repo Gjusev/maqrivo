@@ -17,6 +17,7 @@ import {
 } from "@maqrivo/db";
 import { getSessionContext } from "@/server/session";
 import { getNewOffersDigest, type NewOffersDigestItem } from "@/server/ingestion/digest";
+import { computePlanStaleness } from "@/server/optimization/staleness";
 import { formatMoney, totalNutrition, type IngredientNutrition, type NutritionPer100 } from "@maqrivo/core";
 import { CalendarBlankIcon } from "@phosphor-icons/react/dist/ssr/CalendarBlank";
 import { CheckIcon } from "@phosphor-icons/react/dist/ssr/Check";
@@ -26,6 +27,7 @@ import { GeneratePlanButton } from "./week/generate-plan-button";
 
 export default async function TodayPage() {
   const t = await getTranslations("Today");
+  const tw = await getTranslations("Week");
   const locale = await getLocale();
   const session = await getSessionContext();
   if (!session) return null;
@@ -83,6 +85,9 @@ export default async function TodayPage() {
   // "New at your stores": promotions ingested this week within the user's
   // two-tier store scope — the visibility surface for overnight automation.
   const digest = await getNewOffersDigest(session.userId);
+
+  // Plan staleness (plan 013): pricing facts that changed under the active plan.
+  const staleness = plan ? await computePlanStaleness(plan.id) : null;
 
   const todayIso = new Date().toISOString().slice(0, 10);
 
@@ -149,6 +154,14 @@ export default async function TodayPage() {
 
       <div className="space-y-4">
         {!setupComplete ? <SetupChecklist done={setupDone} /> : null}
+        {staleness?.stale ? (
+          <span
+            className="w-fit rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700"
+            title={`${String(staleness.newPriceObservations)} prices / ${String(staleness.newPromotions)} promotions`}
+          >
+            {tw("staleBadge")}
+          </span>
+        ) : null}
         <div className="grid grid-cols-2 gap-2">
           <div className="card p-3.5">
             <p className="text-xs uppercase tracking-wide text-zinc-400">{t("calories")}</p>

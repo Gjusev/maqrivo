@@ -69,6 +69,7 @@ export default async function ProfilePage() {
               allowUnknownHalal: profile?.allowUnknownHalal ?? false,
               vegetarian: profile?.vegetarian ?? false,
               vegan: profile?.vegan ?? false,
+              autoRefreshPlan: profile?.autoRefreshPlan ?? false,
               allergens: profile?.allergens ?? [],
             }}
           />

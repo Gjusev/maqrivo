@@ -43,6 +43,13 @@
       "when": 1788777739967,
       "tag": "0005_milky_next_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788778429298,
+      "tag": "0006_moaning_thundra",
+      "breakpoints": true
     }
   ]
 }

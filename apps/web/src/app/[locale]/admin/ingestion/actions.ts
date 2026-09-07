@@ -11,7 +11,8 @@ export async function triggerJobAction(
     | "openprices-sync"
     | "catalogue-sync"
     | "page-extraction"
-    | "store-discovery",
+    | "store-discovery"
+    | "plan-refresh",
 ): Promise<{ ok: boolean }> {
   const session = await getSessionContext();
   if (!session) return { ok: false };
@@ -36,6 +37,9 @@ export async function triggerJobAction(
     } else if (job === "store-discovery") {
       const { runStoreDiscoverySweep } = await import("@/server/stores/discovery");
       await runStoreDiscoverySweep();
+    } else if (job === "plan-refresh") {
+      const { runPlanRefreshSweep } = await import("@/server/optimization/plan-refresh");
+      await runPlanRefreshSweep();
     } else {
       const { runOpenPricesSync } = await import("@/server/ingestion/openprices-sync");
       await runOpenPricesSync();

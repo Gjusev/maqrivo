@@ -109,6 +109,8 @@ export const nutritionProfile = pgTable("nutrition_profile", {
   allowUnknownHalal: boolean("allow_unknown_halal").notNull().default(false),
   vegetarian: boolean("vegetarian").notNull().default(false),
   vegan: boolean("vegan").notNull().default(false),
+  /** Plan 013: opt-in weekly auto-refresh (Sundays 07:19). Never default-on. */
+  autoRefreshPlan: boolean("auto_refresh_plan").notNull().default(false),
   allergens: text("allergens").array().notNull().default([]),
   excludedConcepts: text("excluded_concepts").array().notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

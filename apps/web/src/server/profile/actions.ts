@@ -23,6 +23,7 @@ const profileSchema = z.object({
   allowUnknownHalal: z.boolean().default(false),
   vegetarian: z.boolean().default(false),
   vegan: z.boolean().default(false),
+  autoRefreshPlan: z.boolean().default(false),
   allergens: z.array(z.string().max(40)).max(20).default([]),
 });
 
@@ -43,9 +44,9 @@ export async function saveNutritionProfileAction(input: unknown): Promise<{ ok: 
     mealsPerDay: d.mealsPerDay,
     weeklyBudgetCents: d.weeklyBudgetEuros !== undefined ? Math.round(d.weeklyBudgetEuros * 100) : null,
     halalRequired: d.halalRequired,
-    allowUnknownHalal: d.allowUnknownHalal,
     vegetarian: d.vegetarian,
     vegan: d.vegan,
+    autoRefreshPlan: d.autoRefreshPlan,
     allergens: d.allergens,
   });
   // Preferences row may not exist yet on fresh accounts.

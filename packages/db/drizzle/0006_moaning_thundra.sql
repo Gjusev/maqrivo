@@ -1,0 +1,1 @@
+ALTER TABLE "nutrition_profile" ADD COLUMN "auto_refresh_plan" boolean DEFAULT false NOT NULL;

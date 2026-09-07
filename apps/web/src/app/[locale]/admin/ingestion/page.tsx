@@ -28,6 +28,7 @@ export default async function AdminIngestionPage() {
           <TriggerButton jobKey="catalogue-sync" />
           <TriggerButton jobKey="page-extraction" />
           <TriggerButton jobKey="store-discovery" />
+          <TriggerButton jobKey="plan-refresh" />
         </div>
       </div>
 

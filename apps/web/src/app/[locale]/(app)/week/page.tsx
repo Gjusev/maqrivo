@@ -10,6 +10,7 @@ import { CalendarBlankIcon } from "@phosphor-icons/react/dist/ssr/CalendarBlank"
 import { Link } from "@/i18n/navigation";
 import { WeekGrid } from "./week-grid";
 import { GeneratePlanButton } from "./generate-plan-button";
+import { computePlanStaleness } from "@/server/optimization/staleness";
 
 export default async function WeekPage() {
   const t = await getTranslations("Week");
@@ -55,6 +56,9 @@ export default async function WeekPage() {
     .leftJoin(recipe, eq(mealSlot.recipeId, recipe.id))
     .where(eq(mealSlot.mealPlanId, plan.id));
 
+  // Plan staleness (plan 013): pricing facts that changed under this plan.
+  const staleness = await computePlanStaleness(plan.id);
+
   const dayKeys = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
   const dates: string[] = [];
   const start = new Date(`${plan.weekStart}T00:00:00Z`);
@@ -72,6 +76,15 @@ export default async function WeekPage() {
         title={t("title")}
         action={<GeneratePlanButton />}
       />
+
+      {staleness.stale ? (
+        <span
+          className="-mt-2 mb-2 block w-fit rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700"
+          title={`${String(staleness.newPriceObservations)} prices / ${String(staleness.newPromotions)} promotions`}
+        >
+          {t("staleBadge")}
+        </span>
+      ) : null}
 
       <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
         <div className="card p-3">

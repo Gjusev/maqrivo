@@ -17,6 +17,7 @@ export interface NutritionFormInitial {
   allowUnknownHalal: boolean;
   vegetarian: boolean;
   vegan: boolean;
+  autoRefreshPlan: boolean;
   allergens: string[];
 }
 
@@ -28,6 +29,7 @@ export function NutritionForm({ initial }: { initial: NutritionFormInitial }) {
   const [allowUnknown, setAllowUnknown] = useState(initial.allowUnknownHalal);
   const [vegetarian, setVegetarian] = useState(initial.vegetarian);
   const [vegan, setVegan] = useState(initial.vegan);
+  const [autoRefreshPlan, setAutoRefreshPlan] = useState(initial.autoRefreshPlan);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -56,6 +58,7 @@ export function NutritionForm({ initial }: { initial: NutritionFormInitial }) {
       allowUnknownHalal: allowUnknown,
       vegetarian,
       vegan,
+      autoRefreshPlan,
       allergens: String(form.get("allergens") ?? "")
         .split(",")
         .map((a) => a.trim().toLowerCase())
@@ -148,6 +151,16 @@ export function NutritionForm({ initial }: { initial: NutritionFormInitial }) {
         <label htmlFor="allergens">{t("allergens")}</label>
         <input id="allergens" name="allergens" defaultValue={initial.allergens.join(", ")} placeholder="lactose, fruits à coque" />
       </div>
+
+      <label className="flex min-h-11 items-center gap-3 text-sm text-zinc-700">
+        <input
+          type="checkbox"
+          checked={autoRefreshPlan}
+          onChange={(e) => setAutoRefreshPlan(e.target.checked)}
+          className="size-5 min-h-0"
+        />
+        {t("autoRefresh")}
+      </label>
 
       {error ? <p className="field-error">{error}</p> : null}
       {saved ? <p className="text-sm font-medium text-brand-700">{t("saved")}</p> : null}

@@ -2,7 +2,8 @@
  * pg-boss job queue (Postgres-backed, in-process). Started from
  * instrumentation.ts in the server runtime; never during build.
  * Schedules: expiry + pantry consumption sweep + Open Prices sync + catalogue
- * pipeline daily, store discovery weekly (Mondays) — off-minute per policy.
+ * pipeline daily, store discovery weekly (Mondays), opt-in plan refresh
+ * weekly (Sundays) — off-minute per policy.
  */
 import { runOpenPricesSync } from "../ingestion/openprices-sync";
 import { runPromotionExpiry } from "../ingestion/promotions";
@@ -10,11 +11,12 @@ import { runCatalogueSync } from "../ingestion/catalogue-sync";
 import { runExtractionSweep } from "../catalogues/extraction-runner";
 import { runStoreDiscoverySweep } from "../stores/discovery";
 import { runPantryConsumptionSweep } from "../pantry/loop";
+import { runPlanRefreshSweep } from "../optimization/plan-refresh";
 // Flipbook adapters register themselves on import — a source must be
 // registered for the catalogue-sync job to touch that retailer.
 import "../integrations/retailers/adapters";
 
-const JOBS = ["promotion-expiry", "pantry-consumption", "openprices-sync", "catalogue-sync", "page-extraction", "store-discovery"] as const;
+const JOBS = ["promotion-expiry", "pantry-consumption", "openprices-sync", "catalogue-sync", "page-extraction", "store-discovery", "plan-refresh"] as const;
 type JobName = (typeof JOBS)[number];
 
 let bossInstance: import("pg-boss").PgBoss | null = null;
@@ -47,6 +49,7 @@ export async function startWorker(connectionString: string): Promise<void> {
   await boss.schedule("catalogue-sync", "09 6 * * *");
   await boss.schedule("page-extraction", "41 6 * * *"); // after catalogue-sync (09 6), off-minute
   await boss.schedule("store-discovery", "23 4 * * 1"); // Mondays 04:23, off-minute
+  await boss.schedule("plan-refresh", "19 7 * * 0"); // Sundays 07:19 — after the week's final ingestion, before the shopping week
 
   bossInstance = boss;
   console.log("[pg-boss] worker started");
@@ -75,6 +78,9 @@ async function runJob(name: JobName): Promise<void> {
   } else if (name === "store-discovery") {
     const r = await runStoreDiscoverySweep();
     console.log(`[job] store-discovery: ${String(r.users)} users / ${String(r.discovered)} discovered`);
+  } else if (name === "plan-refresh") {
+    const r = await runPlanRefreshSweep();
+    console.log(`[job] plan-refresh: ${String(r.users)} users / ${String(r.refreshed)} refreshed`);
   }
 }
 
