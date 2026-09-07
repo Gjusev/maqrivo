@@ -3,7 +3,7 @@
  * run the CP-SAT worker, persist meal plans and shopping plans with their
  * deterministic reason snapshots. AI is never in this path.
  */
-import { and, desc, eq, isNull, ne, or } from "drizzle-orm";
+import { and, desc, eq, isNull, ne, or, sql } from "drizzle-orm";
 import { db } from "../db";
 import {
   foodConcept,
@@ -322,14 +322,38 @@ export async function optimizeShoppingForUser(
   const allConcepts = await db.select().from(foodConcept);
   const shelfByConcept = new Map(allConcepts.map((c) => [c.id, c.shelfLifeClass as "storable" | "semi" | "fresh"]));
 
-  // Fresh price observations per (product, store).
-  const observations = await db.select().from(priceObservation).orderBy(desc(priceObservation.observedAt));
+  // Fresh price observations per (product, store): the latest row per pair is
+  // picked in SQL via Postgres' keep-first dedup (index:
+  // price_obs_product_store_idx) instead of loading every observation into
+  // memory. Raw SQL rows are snake_case — mapped explicitly to the fields
+  // used downstream (freshness + pricing).
   const now = new Date();
-  const priceByProductStore = new Map<string, typeof priceObservation.$inferSelect>();
-  for (const obs of observations) {
-    const key = `${obs.productId}:${obs.storeId}`;
-    const prior = priceByProductStore.get(key);
-    if (!prior || prior.observedAt < obs.observedAt) priceByProductStore.set(key, obs);
+  const latestPrices = (
+    await db.execute<{
+      product_id: string;
+      store_id: string;
+      amount_cents: number;
+      price_basis: typeof priceObservation.$inferSelect.priceBasis;
+      observed_at: Date;
+      source: typeof priceObservation.$inferSelect.source;
+    }>(sql`
+      SELECT DISTINCT ON (product_id, store_id)
+        product_id, store_id, amount_cents, price_basis, observed_at, source
+      FROM price_observation
+      ORDER BY product_id, store_id, observed_at DESC
+    `)
+  ).rows;
+  const priceByProductStore = new Map<
+    string,
+    Pick<typeof priceObservation.$inferSelect, "amountCents" | "priceBasis" | "observedAt" | "source">
+  >();
+  for (const row of latestPrices) {
+    priceByProductStore.set(`${row.product_id}:${row.store_id}`, {
+      amountCents: row.amount_cents,
+      priceBasis: row.price_basis,
+      observedAt: row.observed_at,
+      source: row.source,
+    });
   }
 
   // Active promotions matched to products at those stores.

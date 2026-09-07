@@ -140,17 +140,39 @@ describe("parsePrintedDate", () => {
     expect(parsePrintedDate("5/10/26")).toBe("2026-10-05");
   });
 
-  it("infers the year for day/month-only prints (leaflets look forward)", () => {
-    const now = new Date();
-    const futureMonth = ((now.getMonth() + 7) % 12) + 1; // ~7 months ahead
-    const result = parsePrintedDate(`01/${String(futureMonth).padStart(2, "0")}`);
-    expect(result).toBe(`${String(now.getFullYear())}-${String(futureMonth).padStart(2, "0")}-01`);
-  });
-
   it("rejects non-dates", () => {
     expect(parsePrintedDate("prix")).toBeNull();
     expect(parsePrintedDate(null)).toBeNull();
     expect(parsePrintedDate("18-13")).toBeNull();
+  });
+
+  it("infers the year for day/month-only prints (leaflets look forward)", () => {
+    // ~6 months ahead of Jan 2 → current year
+    expect(parsePrintedDate("01/07", new Date("2026-01-02T12:00:00Z"))).toBe("2026-07-01");
+  });
+
+  it("measures real day distance, not MMDD arithmetic", () => {
+    // Dec 20 → Jun 15 is 188 days past (>6 months → next year). The old
+    // MMDD integer diff (0615 - 1220 = -605) kept it in the current year.
+    expect(parsePrintedDate("15/06", new Date("2026-12-20T12:00:00Z"))).toBe("2027-06-15");
+    // Jun 20 is exactly 183 days past → still the current year…
+    expect(parsePrintedDate("20/06", new Date("2026-12-20T12:00:00Z"))).toBe("2026-06-20");
+    // …one day further crosses the 6-month policy line.
+    expect(parsePrintedDate("19/06", new Date("2026-12-20T12:00:00Z"))).toBe("2027-06-19");
+  });
+
+  it("handles adjacent days across the year boundary by real distance", () => {
+    // Dec 31 seen from Jan 2 is ~11 months AHEAD → current year; the next
+    // day's date (Jan 1) seen from Dec 30 is ~11 months PAST as current-year
+    // → next year. One calendar day apart, not "1130" MMDD units.
+    expect(parsePrintedDate("31/12", new Date("2026-01-02T12:00:00Z"))).toBe("2026-12-31");
+    expect(parsePrintedDate("01/01", new Date("2025-12-30T12:00:00Z"))).toBe("2026-01-01");
+  });
+
+  it("uses Europe/Paris local date, not the server clock's zone", () => {
+    // 2025-12-31T23:30Z is already 2026-01-01 in Paris. A Paris-naive read
+    // infers 2026; a UTC-naive read would infer 2025.
+    expect(parsePrintedDate("15/07", new Date("2025-12-31T23:30:00Z"))).toBe("2026-07-15");
   });
 });
 

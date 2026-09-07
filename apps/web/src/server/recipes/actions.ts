@@ -119,9 +119,9 @@ export async function duplicateRecipeAction(recipeId: string): Promise<ActionRes
     await db
       .select()
       .from(recipe)
-      .where(or(eq(recipe.ownerUserId, session.userId), isNull(recipe.ownerUserId)))
-      .limit(200)
-  ).find((r) => r.id === recipeId);
+      .where(and(eq(recipe.id, recipeId), or(eq(recipe.ownerUserId, session.userId), isNull(recipe.ownerUserId))))
+      .limit(1)
+  )[0];
   if (!source) return { ok: false, error: "not-found" };
 
   const copy = (

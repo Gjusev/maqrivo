@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, desc, eq, isNull, or } from "drizzle-orm";
+import { and, count, desc, eq, isNull, or } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../db";
 import {
@@ -39,7 +39,15 @@ export interface ReceiptLineView {
 /** Deterministic product suggestion for a receipt label (never auto-linked). */
 async function suggestProductForLabel(label: string, userId: string) {
   const products = await db
-    .select()
+    .select({
+      id: product.id,
+      name: product.name,
+      brand: product.brand,
+      barcode: product.barcode,
+      externalIds: product.externalIds,
+      packageQuantity: product.packageQuantity,
+      packageUnit: product.packageUnit,
+    })
     .from(product)
     .where(or(eq(product.ownerUserId, userId), isNull(product.ownerUserId)))
     .limit(500);
@@ -267,13 +275,17 @@ export async function listReceipts(): Promise<
     .where(eq(receipt.userId, session.userId))
     .orderBy(desc(receipt.purchasedOn), desc(receipt.createdAt))
     .limit(30);
-  const counts = await db.select().from(receiptLine);
+  const countRows = await db
+    .select({ receiptId: receiptLine.receiptId, lineCount: count() })
+    .from(receiptLine)
+    .groupBy(receiptLine.receiptId);
+  const lineCountByReceipt = new Map(countRows.map((r) => [r.receiptId, r.lineCount]));
   return rows.map(({ receipt: r, storeName }) => ({
     id: r.id,
     storeName,
     purchasedOn: r.purchasedOn,
     totalCents: r.totalCents,
-    lineCount: counts.filter((l) => l.receiptId === r.id).length,
+    lineCount: lineCountByReceipt.get(r.id) ?? 0,
   }));
 }
 

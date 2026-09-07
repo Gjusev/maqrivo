@@ -26,7 +26,7 @@ import {
   flipbookRegistrations,
   type RemoteCatalogue,
 } from "../integrations/retailers/flipbook";
-import { tryMatchPromotionProduct } from "./promotions";
+import { loadProductCandidates, tryMatchPromotionProduct } from "./promotions";
 
 /** Politeness budget per run, per store (ADR-0005). */
 const MAX_CATALOGUES_PER_STORE = 3;
@@ -210,6 +210,8 @@ async function ingestStructuredItems(input: {
     .from(promotion)
     .where(eq(promotion.catalogueId, input.catalogueId));
   const seen = new Set(existing.map((p) => `${p.descriptionRaw}|${p.barcode ?? ""}`));
+  // One product-catalog load for the whole batch, not one per promotion.
+  const productCandidates = await loadProductCandidates();
 
   let created = 0;
   for (const item of input.catalogue.items.slice(0, MAX_ITEMS_PER_CATALOGUE)) {
@@ -267,7 +269,7 @@ async function ingestStructuredItems(input: {
         .returning()
     )[0]!;
 
-    await tryMatchPromotionProduct(inserted.id, item.ean, item.brand, item.label);
+    await tryMatchPromotionProduct(inserted.id, item.ean, item.brand, item.label, productCandidates);
     created += 1;
   }
   return created;

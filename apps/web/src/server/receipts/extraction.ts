@@ -30,19 +30,30 @@ export interface ReceiptLineCandidate {
   perKgCents: number | null;
 }
 
-/** Receipt noise that must never become a price line. French till vocabulary. */
-const JUNK_LABEL = new RegExp(
+/**
+ * Receipt noise that must never become a price line. French till vocabulary.
+ * Single words match WHOLE tokens only — a junk word as a substring is not
+ * junk (BONBON is not BON, CARTON is not CARTE, DATTE is not DATE).
+ * Phrases (multi-word or punctuation-bearing) match the whole label.
+ */
+const JUNK_WORD = new RegExp(
+  `^(?:${[
+    "total", "tva", "taxe", "montant", "paiement", "cb", "visa", "mastercard",
+    "esp[eè]ces", "cheque", "chèque", "rendu", "solde", "nan", "point",
+    "points", "fidelite", "fidélité", "carte", "client", "euro", "reduction",
+    "réduction", "remise", "bon", "offre", "ticket", "recu", "reçu", "siret",
+    "ape", "naf", "sarl", "t[eé]l", "www", "http", "adresse", "merci",
+    "serveur", "caisse", "numero", "numéro", "n°", "date", "heure", "hier",
+    "aujourd", "facture", "francs", "motive", "bienvenue", "smiley",
+  ].join("|")})$`,
+  "i",
+);
+
+const JUNK_PHRASE = new RegExp(
   [
-    "total", "tva", "taxe", "montant", "a payer", "à payer", "paiement",
-    "cb", "carte bancaire", "visa", "mastercard", "esp[eè]ces", "cheque",
-    "chèque", "rendu", "rendu monnaie", "solde", "nan", "//",
-    "point", "points", "fidelite", "fidélité", "carte", "client", "euro",
-    "reduction", "réduction", "remise", "bon", "offre", "ticket", "recu",
-    "reçu", "siret", "ape", "naf", "sarl", "sa au capital", "t[eé]l",
-    "www", "http", ".fr", ".com", "adresse", "code postal", "merci",
-    "serveur", "caisse", "numero", "numéro", "n°", "date", "heure",
-    "hier", "aujourd", "facture", "francs", "euros? en caisse",
-    "motive", "bienvenue", "a bient[oô]t", "à bient[oô]t", "smiley",
+    "a payer", "à payer", "carte bancaire", "rendu monnaie", "sa au capital",
+    "code postal", "euros? en caisse", "a bient[oô]t", "à bient[oô]t",
+    "//", "\\.fr", "\\.com",
   ].join("|"),
   "i",
 );
@@ -52,7 +63,9 @@ export function isJunkLabel(label: string): boolean {
   if (normalized.length < 3) return true;
   // Pure numbers/punctuation (dates, times, amounts alone)
   if (!/[a-zà-ÿ]{2}/i.test(normalized)) return true;
-  return JUNK_LABEL.test(normalized);
+  const tokens = normalized.toLowerCase().split(/[^a-zà-ÿ0-9°]+/).filter(Boolean);
+  if (tokens.some((token) => JUNK_WORD.test(token))) return true;
+  return JUNK_PHRASE.test(normalized.toLowerCase().replace(/\s+/g, " "));
 }
 
 export function receiptLinesFromExtraction(output: unknown): ReceiptLineCandidate[] {

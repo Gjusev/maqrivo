@@ -88,23 +88,37 @@ export async function createManualPromotion(input: unknown): Promise<{ ok: boole
   return { ok: true };
 }
 
-/** Deterministic product matching for a promotion — shared by manual and catalogue flows. */
+/**
+ * Matchable product catalog (capped). Load once and pass through when
+ * matching many promotions — a per-call load turned a 60-item catalogue
+ * sync into 60 full product scans.
+ */
+export async function loadProductCandidates(): Promise<ProductCandidate[]> {
+  const products = await db.select().from(product).limit(500);
+  return products.map((p) => ({
+    id: p.id,
+    name: p.name,
+    brand: p.brand,
+    barcode: p.barcode,
+    retailerProductIds: (p.externalIds as Record<string, string> | null) ?? {},
+    packageQuantity: p.packageQuantity !== null ? Number(p.packageQuantity) : null,
+    packageUnit: p.packageUnit,
+  }));
+}
+
+/**
+ * Deterministic product matching for a promotion — shared by manual and
+ * catalogue flows. Pass `candidates` (from loadProductCandidates) when
+ * matching a batch; omitted, it loads the catalog itself.
+ */
 export async function tryMatchPromotionProduct(
   promotionId: string,
   barcode: string | null,
   brand: string | null,
   description: string,
+  candidates?: ProductCandidate[],
 ) {
-  const products = await db.select().from(product).limit(500);
-  const candidates: ProductCandidate[] = products.map((p) => ({
-    id: p.id,
-    name: p.name,
-    brand: p.brand,
-    barcode: p.barcode,
-    retailerProductIds: p.externalIds as Record<string, string> | null ?? {},
-    packageQuantity: p.packageQuantity !== null ? Number(p.packageQuantity) : null,
-    packageUnit: p.packageUnit,
-  }));
+  const catalog = candidates ?? (await loadProductCandidates());
   const ref: ExternalProductRef = {
     name: description,
     brand,
@@ -114,7 +128,7 @@ export async function tryMatchPromotionProduct(
     packageQuantity: null,
     packageUnit: null,
   };
-  const resolution = resolveProduct(ref, candidates);
+  const resolution = resolveProduct(ref, catalog);
   if (resolution.state === "EXACT" || resolution.state === "PROBABLE") {
     await db.insert(promotionProductMatch).values({
       promotionId,
