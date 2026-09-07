@@ -80,7 +80,10 @@ export function PageCard({
   }
 
   async function confirm(candidate: CatalogueCandidate) {
-    const promoPrice = candidate.promoPriceCents ?? candidate.regularPriceCents;
+    // A pct-only deal has no printed promo price; passing the regular price
+    // as the "promo" price would erase the discount — send discountPct instead.
+    const isPctDeal = candidate.mechanism === "PERCENTAGE_OFF";
+    const promoPrice = isPctDeal ? candidate.promoPriceCents : candidate.promoPriceCents ?? candidate.regularPriceCents;
     const result = await confirmCandidateAction({
       catalogueId,
       pageId,
@@ -91,6 +94,7 @@ export function PageCard({
       regularPriceCents: candidate.regularPriceCents,
       pricePerKgCents: candidate.pricePerKgCents,
       bundleQty: candidate.bundleQty,
+      discountPct: isPctDeal ? candidate.discountPct : null,
       loyalty: candidate.loyalty,
       validUntil: validUntil || fallbackUntil,
     });

@@ -356,7 +356,9 @@ export async function optimizeShoppingForUser(
         if (!obs) continue;
         const fresh = freshnessOf(obs.observedAt, obs.source, now);
 
-        let promoApplied: typeof promotion.$inferSelect | undefined = promoByProductStore.get(`${p.id}:${storeRow.store.id}`);
+        let promoApplied: typeof promotion.$inferSelect | undefined =
+          promoByProductStore.get(`${p.id}:${storeRow.store.id}`) ??
+          promoByProductStore.get(`*:${p.id}`);
         const promotions: BasketProblem["candidates"][number]["promotions"] = [];
         if (promoApplied?.loyaltyRequired) {
           const promoRetailerSlug = retailerSlugById.get(promoApplied.retailerId);

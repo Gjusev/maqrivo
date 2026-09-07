@@ -144,6 +144,7 @@ const confirmSchema = z.object({
   regularPriceCents: z.number().int().positive().nullable(),
   pricePerKgCents: z.number().int().positive().nullable(),
   bundleQty: z.number().int().positive().nullable(),
+  discountPct: z.number().int().min(1).max(100).nullable(),
   loyalty: z.boolean(),
   validUntil: z.string().regex(dateRegex),
 });
@@ -187,6 +188,7 @@ export async function confirmCandidateAction(input: unknown): Promise<{ ok: bool
         pricePerKgCents: d.pricePerKgCents ?? null,
         mechanism: d.mechanism === "OTHER" ? "PROMO_PRICE" : d.mechanism,
         minQty: d.bundleQty ?? null,
+        discountPct: d.discountPct ?? null,
         payQty: d.bundleQty ?? null,
         loyaltyRequired: d.loyalty,
         validFrom: catRow.cat.validFrom ?? null,

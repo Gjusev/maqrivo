@@ -53,6 +53,37 @@ describe("classifyMechanism", () => {
   });
 });
 
+describe("discountPct derivation", () => {
+  it("-30% → PERCENTAGE_OFF with discountPct 30, propagated into the candidate", () => {
+    const r = classifyMechanism(asCandidate({ ...base, mechanicPhrase: "-30% sur les pâtes" }));
+    expect(r).toMatchObject({ mechanism: "PERCENTAGE_OFF", discountPct: 30 });
+    const candidates = candidatesFromExtraction({
+      items: [{ description: "Pâtes penne 500 g", mechanicPhrase: "-30%", promoPrice: null, regularPrice: 1.49 }],
+    });
+    expect(candidates[0]).toMatchObject({ mechanism: "PERCENTAGE_OFF", discountPct: 30, promoPriceCents: null, regularPriceCents: 149 });
+  });
+
+  it("deuxième à -50% → SECOND_UNIT_DISCOUNT keeps discountPct null (solver defaults to 50)", () => {
+    const r = classifyMechanism(asCandidate({ ...base, mechanicPhrase: "deuxième à -50%" }));
+    expect(r).toMatchObject({ mechanism: "SECOND_UNIT_DISCOUNT", discountPct: null });
+  });
+
+  it("2ème à -50% (accented, the form leaflets actually print) → SECOND_UNIT_DISCOUNT", () => {
+    const r = classifyMechanism(asCandidate({ ...base, mechanicPhrase: "2ème à -50%" }));
+    expect(r).toMatchObject({ mechanism: "SECOND_UNIT_DISCOUNT", discountPct: null });
+  });
+
+  it("le lot de 2 → MULTIBUY keeps discountPct null", () => {
+    const r = classifyMechanism(asCandidate({ ...base, promoPrice: 5, mechanicPhrase: "le lot de 2 pour 5€" }));
+    expect(r).toMatchObject({ mechanism: "MULTIBUY", bundleQty: 2, discountPct: null });
+  });
+
+  it("barré 4.99/2.99 sans phrase → PROMO_PRICE keeps discountPct null", () => {
+    const r = classifyMechanism(asCandidate({ ...base, promoPrice: 2.99, regularPrice: 4.99 }));
+    expect(r).toMatchObject({ mechanism: "PROMO_PRICE", discountPct: null });
+  });
+});
+
 describe("parsePrintedPrice via schema (French strings from vision)", () => {
   it("parses French formatted prices", () => {
     const candidates = candidatesFromExtraction({

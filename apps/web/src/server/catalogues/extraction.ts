@@ -71,6 +71,7 @@ export interface CatalogueCandidate {
   regularPriceCents: number | null;
   pricePerKgCents: number | null;
   bundleQty: number | null;
+  discountPct: number | null;
   loyalty: boolean;
   position: "top" | "middle" | "bottom" | null;
   /** Printed pack size ("500 g"), normalized end date ("2026-09-18") or null. */
@@ -115,29 +116,31 @@ export function eurosToCents(value: unknown): number | null {
  */
 export function classifyMechanism(
   candidate: VisionCandidate,
-): { mechanism: PromotionMechanism | "OTHER"; bundleQty: number | null } {
+): { mechanism: PromotionMechanism | "OTHER"; bundleQty: number | null; discountPct: number | null } {
   const phrase = (candidate.mechanicPhrase ?? "").toLowerCase();
   const bundleMatch = /(?:le lot|lot de|x)\s*(\d{1,2})/.exec(phrase);
-  if (/\b2e\b|deuxieme|deuxième/.test(phrase) && /%|-/.test(phrase)) {
-    return { mechanism: "SECOND_UNIT_DISCOUNT", bundleQty: null };
+  if (/\b2e\b|\b2ème\b|\b2eme\b|deuxieme|deuxième/.test(phrase) && /%|-/.test(phrase)) {
+    return { mechanism: "SECOND_UNIT_DISCOUNT", bundleQty: null, discountPct: null };
   }
   if (bundleMatch) {
     // A lot phrase alone means multi-buy; the bundle price may be the promo.
-    return { mechanism: "MULTIBUY", bundleQty: Number(bundleMatch[1]) };
+    return { mechanism: "MULTIBUY", bundleQty: Number(bundleMatch[1]), discountPct: null };
   }
-  if (/-\s*\d{1,3}\s*%/.test(phrase)) {
-    return { mechanism: "PERCENTAGE_OFF", bundleQty: null };
+  const pctMatch = /-\s*(\d{1,3})\s*%/.exec(phrase);
+  if (pctMatch) {
+    const pct = Number(pctMatch[1]);
+    return { mechanism: "PERCENTAGE_OFF", bundleQty: null, discountPct: pct >= 1 && pct <= 100 ? pct : null };
   }
   if (candidate.loyalty || /prix carte|carte fid|fidélité|fidelite/.test(phrase)) {
-    return { mechanism: "LOYALTY_PRICE", bundleQty: null };
+    return { mechanism: "LOYALTY_PRICE", bundleQty: null, discountPct: null };
   }
   if (candidate.regularPrice != null && candidate.promoPrice != null && candidate.promoPrice < candidate.regularPrice) {
-    return { mechanism: "PROMO_PRICE", bundleQty: null };
+    return { mechanism: "PROMO_PRICE", bundleQty: null, discountPct: null };
   }
   if (candidate.promoPrice != null) {
-    return { mechanism: "PROMO_PRICE", bundleQty: null };
+    return { mechanism: "PROMO_PRICE", bundleQty: null, discountPct: null };
   }
-  return { mechanism: "OTHER", bundleQty: null };
+  return { mechanism: "OTHER", bundleQty: null, discountPct: null };
 }
 
 export function candidatesFromExtraction(output: unknown): CatalogueCandidate[] {
@@ -146,7 +149,7 @@ export function candidatesFromExtraction(output: unknown): CatalogueCandidate[] 
   return parsed.data.items
     .filter((item) => item.promoPrice != null || item.regularPrice != null || item.pricePerKg != null)
     .map((item, index) => {
-      const { mechanism, bundleQty } = classifyMechanism(item);
+      const { mechanism, bundleQty, discountPct } = classifyMechanism(item);
       return {
         index,
         description: item.description.trim(),
@@ -156,6 +159,7 @@ export function candidatesFromExtraction(output: unknown): CatalogueCandidate[] 
         regularPriceCents: eurosToCents(item.regularPrice),
         pricePerKgCents: eurosToCents(item.pricePerKg),
         bundleQty,
+        discountPct,
         loyalty: Boolean(item.loyalty),
         position: normalizePosition(item.position),
         packSize: item.packSize?.trim() || null,
