@@ -11,14 +11,14 @@ STOP conditions, and update your row when done.
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
 | 001  | Fetch leaflet pages for structured catalogues (fixes "empty catalogues") | P1 | M | — | DONE |
-| 002  | Fix promotion application math (wildcard store + discountPct) | P1 | S | — | TODO |
+| 002  | Fix promotion application math (wildcard store + discountPct) | P1 | S | — | DONE |
 | 003  | Catalogue review flow: hydrate candidates, dedup, visible errors | P1 | S | 001 (soft) | TODO |
 | 004  | Quick trust fixes: titles, favorite bug, receipt store, pantry row | P1 | S | — | DONE |
 | 005  | Automated vision extraction job (pg-boss sweep) | P2 | M | 001, 003 | TODO |
 | 006  | Auto-confirm gate + daily digest + weekly discovery + Carrefour honesty | P2 | M | 005 | TODO |
 | 007  | Error/loading/not-found boundaries | P2 | M | — | DONE |
 | 008  | Onboarding checklist + in-app leaflet lightbox | P2 | M | — | TODO |
-| 009  | Offers "my stores" filter + list pagination | P3 | M | — | TODO |
+| 009  | Offers "my stores" filter + list pagination | P3 | M | — | DONE |
 | 010  | Security hardening: IDOR, unauth actions, owner checks | P2 | M | — | TODO |
 | 011  | Perf & data quality: SQL aggregates, junk filter, timezone | P3 | M | — | TODO |
 | 012  | Close the pantry loop (restock on purchase, deduct on consumption) | P3 | M | — | TODO |
