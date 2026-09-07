@@ -18,7 +18,8 @@ services:
       OVERPASS_ENDPOINT: ${OVERPASS_ENDPOINT:-https://overpass-api.de/api/interpreter}
       PHOTON_ENDPOINT: ${PHOTON_ENDPOINT:-https://photon.komoot.io/api}
       SEED_ON_BOOT: ${SEED_ON_BOOT:-true}
-      SOLVER_DIR: /opt/solver
+      CATALOGUE_AUTO_EXTRACT: ${CATALOGUE_AUTO_EXTRACT:-1}
+      CATALOGUE_EXTRACT_BUDGET: ${CATALOGUE_EXTRACT_BUDGET:-40}
     depends_on:
       db:
         condition: service_healthy
