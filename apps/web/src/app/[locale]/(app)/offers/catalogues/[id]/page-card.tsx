@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
@@ -181,11 +182,13 @@ export function PageCard({
           className="block w-full cursor-zoom-in bg-zinc-100"
           aria-label={`${t("evidencePhoto")} ${String(pageNumber)}`}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element -- authenticated, non-optimized local upload */}
-          <img
+          <Image
             src={`/api/catalogues/pages/${pageId}/image`}
             alt={`${t("evidencePhoto")} ${String(pageNumber)}`}
-            className="max-h-96 w-full object-contain"
+            width={642}
+            height={1089}
+            className="h-auto max-h-96 w-full object-contain"
+            sizes="(max-width: 430px) 100vw, 430px"
             loading="lazy"
           />
         </button>

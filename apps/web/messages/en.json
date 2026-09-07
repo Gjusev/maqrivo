@@ -275,6 +275,7 @@
     "searchAddress": "Search an address…",
     "map": "Map",
     "list": "List",
+    "mapLongPressHint": "Long-press the map to add your store",
     "enabledStores": "Tracked stores",
     "discoveryFailed": "Discovery failed",
     "discoveryDone": "{count} new stores found",

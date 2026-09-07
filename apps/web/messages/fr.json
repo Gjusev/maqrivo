@@ -275,6 +275,7 @@
     "searchAddress": "Rechercher une adresse…",
     "map": "Carte",
     "list": "Liste",
+    "mapLongPressHint": "Appui long sur la carte pour ajouter votre magasin",
     "enabledStores": "Magasins suivis",
     "discoveryFailed": "La découverte a échoué",
     "discoveryDone": "{count} nouveaux magasins trouvés",

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type SubmitEvent } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
-import { setStorePrefsAction } from "@/server/stores/actions";
+import { createCustomStoreAction, setStorePrefsAction } from "@/server/stores/actions";
+import { Dialog } from "@/components/dialog";
 import { MapPinLineIcon } from "@phosphor-icons/react/dist/csr/MapPinLine";
 import type { GeoJSONSource, Map as MaplibreMap } from "maplibre-gl";
 
@@ -52,6 +53,26 @@ const KIND_COLORS: Record<StoreKind, string> = {
   nearby: "#a1a1aa",
 };
 
+/** Same format options as /stores/new; labels live under Stores.formats.*. */
+const FORMAT_OPTIONS = ["supermarket", "butcher", "bakery", "vegetables", "market", "specialty"] as const;
+
+/** Coordinates are persisted at 6-decimal precision (~11 cm). */
+function round6(value: number): number {
+  return Math.round(value * 1e6) / 1e6;
+}
+
+function toCollection(list: MapStore[]): StoresCollection {
+  return {
+    type: "FeatureCollection",
+    features: list.map((s) => ({
+      type: "Feature" as const,
+      id: s.id,
+      geometry: { type: "Point" as const, coordinates: [s.lng, s.lat] },
+      properties: { id: s.id, kind: kindOf(s) },
+    })),
+  };
+}
+
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c);
 }
@@ -72,23 +93,79 @@ export function StoresMap({
   stores: MapStore[];
 }) {
   const t = useTranslations("Stores");
+  const tc = useTranslations("Common");
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const [showMap, setShowMap] = useState(false);
 
+  // "Add a store here" sheet — opened by long-press or right-click on the map.
+  const [sheet, setSheet] = useState<{ lat: number; lng: number } | null>(null);
+  const [sheetPending, setSheetPending] = useState(false);
+  const [sheetError, setSheetError] = useState<string | null>(null);
+  const sheetOpenRef = useRef(false);
+
   // Fresh values for popup handlers without remounting the map.
   const storesRef = useRef(stores);
   const routerRef = useRef(router);
+  const mapRef = useRef<MaplibreMap | null>(null);
+  const byIdRef = useRef(new Map<string, MapStore>());
   useEffect(() => {
     storesRef.current = stores;
     routerRef.current = router;
+    byIdRef.current = new Map(stores.map((s) => [s.id, s]));
+    // Fresh server data (e.g. a just-created store) reaches the live map
+    // source without remounting the whole map.
+    const source = mapRef.current?.getSource("stores") as GeoJSONSource | undefined;
+    source?.setData(toCollection(stores));
   }, [stores, router]);
+
+  function closeSheet() {
+    sheetOpenRef.current = false;
+    setSheet(null);
+    setSheetError(null);
+  }
+
+  // Same action contract as /stores/new: name + format, coords from the press.
+  async function submitSheet(event: SubmitEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!sheet || sheetPending) return;
+    const form = new FormData(event.currentTarget);
+    const lat = round6(sheet.lat);
+    const lng = round6(sheet.lng);
+    setSheetPending(true);
+    setSheetError(null);
+    const result = await createCustomStoreAction({
+      name: String(form.get("name") ?? ""),
+      format: String(form.get("format") ?? "supermarket"),
+      lat,
+      lng,
+    });
+    if (result.ok) {
+      closeSheet();
+      setSheetPending(false);
+      router.refresh();
+      const map = mapRef.current;
+      if (map) map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 14), duration: 500 });
+    } else {
+      setSheetPending(false);
+      setSheetError(tc("error"));
+    }
+  }
 
   useEffect(() => {
     if (!showMap || !containerRef.current) return;
     const container = containerRef.current;
     let map: MaplibreMap | null = null;
     let cancelled = false;
+    // Long-press state shared with the cleanup below (map handlers are wired
+    // once the async import resolves).
+    let pressTimer: number | undefined;
+    let pressStart: { x: number; y: number } | null = null;
+    const cancelPress = () => {
+      if (pressTimer !== undefined) window.clearTimeout(pressTimer);
+      pressTimer = undefined;
+      pressStart = null;
+    };
 
     void (async () => {
       // Dynamic by design: maplibre-gl (~800 kB) loads only when the user
@@ -102,16 +179,40 @@ export function StoresMap({
         zoom: 13,
       });
       map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+      mapRef.current = map;
 
-      const byId = new Map(storesRef.current.map((s) => [s.id, s]));
-      const toCollection = (list: MapStore[]): StoresCollection => ({
-        type: "FeatureCollection",
-        features: list.map((s) => ({
-          type: "Feature" as const,
-          id: s.id,
-          geometry: { type: "Point" as const, coordinates: [s.lng, s.lat] },
-          properties: { id: s.id, kind: kindOf(s) },
-        })),
+      // Long-press (touch, 600 ms) or right-click opens the "add store here"
+      // sheet at that point; movement beyond ~8 px cancels a pending press.
+      const openSheet = (lat: number, lng: number) => {
+        if (sheetOpenRef.current) return;
+        sheetOpenRef.current = true;
+        setSheet({ lat, lng });
+      };
+      map.on("touchstart", (e) => {
+        const start = e.points.length === 1 ? e.points[0] : undefined;
+        if (!map || !start) {
+          cancelPress();
+          return;
+        }
+        pressStart = { x: start.x, y: start.y };
+        pressTimer = window.setTimeout(() => {
+          pressTimer = undefined;
+          if (!map || !pressStart) return;
+          const point = map.unproject([pressStart.x, pressStart.y]);
+          openSheet(point.lat, point.lng);
+        }, 600);
+      });
+      map.on("touchmove", (e) => {
+        if (!pressStart) return;
+        const p = e.points[0];
+        if (p && Math.hypot(p.x - pressStart.x, p.y - pressStart.y) > 8) cancelPress();
+      });
+      map.on("touchend", cancelPress);
+      map.on("touchcancel", cancelPress);
+      map.on("contextmenu", (e) => {
+        cancelPress();
+        if (!map) return;
+        openSheet(e.lngLat.lat, e.lngLat.lng);
       });
 
       map.on("load", () => {
@@ -197,7 +298,7 @@ export function StoresMap({
           const feature = e.features?.[0];
           const id = feature?.properties?.id as string | undefined;
           if (!id || !feature) return;
-          const s = byId.get(id);
+          const s = byIdRef.current.get(id);
           if (!s || feature.geometry.type !== "Point") return;
           const [lng, lat] = feature.geometry.coordinates;
           const meta = [s.retailer, s.format, s.distanceLabel].filter(Boolean).join(" · ");
@@ -253,6 +354,8 @@ export function StoresMap({
 
     return () => {
       cancelled = true;
+      cancelPress();
+      mapRef.current = null;
       map?.remove();
       map = null;
     };
@@ -275,8 +378,54 @@ export function StoresMap({
         </button>
       </div>
       {showMap ? (
-        <div ref={containerRef} className="h-80 overflow-hidden rounded-xl border border-zinc-200 md:h-96" />
+        <div className="relative">
+          <div ref={containerRef} className="h-80 overflow-hidden rounded-xl border border-zinc-200 md:h-96" />
+          <p className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-zinc-600 shadow-sm">
+            {t("mapLongPressHint")}
+          </p>
+        </div>
       ) : null}
+
+      <Dialog
+        open={sheet !== null}
+        onClose={closeSheet}
+        closeLabel={tc("close")}
+        labelledBy="map-store-sheet-title"
+      >
+        <form onSubmit={submitSheet} className="mt-4 space-y-3">
+          <h2 id="map-store-sheet-title" className="text-lg font-bold text-zinc-900">
+            {t("addCustom")}
+          </h2>
+          <div>
+            <label htmlFor="map-store-name">{t("name")}</label>
+            <input id="map-store-name" name="name" required minLength={2} maxLength={120} />
+          </div>
+          <div>
+            <label htmlFor="map-store-format">{t("format")}</label>
+            <select id="map-store-format" name="format" defaultValue="supermarket">
+              {FORMAT_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {t(`formats.${option}`)}
+                </option>
+              ))}
+            </select>
+          </div>
+          {sheet ? (
+            <p className="text-xs text-zinc-500">
+              {sheet.lat.toFixed(4)}, {sheet.lng.toFixed(4)}
+            </p>
+          ) : null}
+          {sheetError ? <p className="field-error">{sheetError}</p> : null}
+          <div className="flex justify-end gap-2">
+            <button type="button" className="btn-secondary" onClick={closeSheet}>
+              {tc("cancel")}
+            </button>
+            <button type="submit" className="btn-primary" disabled={sheetPending}>
+              {t("createStore")}
+            </button>
+          </div>
+        </form>
+      </Dialog>
     </div>
   );
 }

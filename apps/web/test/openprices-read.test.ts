@@ -1,9 +1,18 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   fetchAllOpenPricesAtLocation,
   fetchOpenPricesAtLocation,
   findOpenPricesLocations,
 } from "../src/server/integrations/openprices";
+
+const lookupMock = vi.hoisted(() =>
+  vi.fn<(hostname: string) => Promise<Array<{ address: string; family: number }>>>(),
+);
+vi.mock("node:dns/promises", () => ({ lookup: lookupMock }));
+
+beforeEach(() => {
+  lookupMock.mockResolvedValue([{ address: "93.184.216.34", family: 4 }]);
+});
 
 afterEach(() => {
   vi.unstubAllGlobals();
