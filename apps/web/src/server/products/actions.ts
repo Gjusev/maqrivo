@@ -10,7 +10,7 @@ import {
   product,
   productNutrition,
 } from "@maqrivo/db";
-import { getSessionContext } from "../session";
+import { getSessionContext, isAdmin } from "../session";
 import { fetchOffProductV3 } from "../integrations/openfoodfacts";
 import { similarity } from "@maqrivo/core";
 
@@ -243,6 +243,8 @@ export async function addPriceObservationAction(input: unknown): Promise<ActionR
 export async function setProductConceptAction(productId: string, conceptId: string | null): Promise<ActionResult> {
   const session = await getSessionContext();
   if (!session) return { ok: false, error: "unauthorized" };
+  // Concept writes land on GLOBAL catalog rows (ownerUserId IS NULL) — admin only.
+  if (!(await isAdmin())) return { ok: false, error: "forbidden" };
   await db
     .update(product)
     .set({ foodConceptId: conceptId, updatedAt: new Date() })
@@ -262,6 +264,8 @@ export async function setHalalStateAction(
 ): Promise<ActionResult> {
   const session = await getSessionContext();
   if (!session) return { ok: false, error: "unauthorized" };
+  // Halal-state writes land on GLOBAL catalog rows (ownerUserId IS NULL) — admin only.
+  if (!(await isAdmin())) return { ok: false, error: "forbidden" };
   await db
     .update(product)
     .set({ halalState, updatedAt: new Date() })

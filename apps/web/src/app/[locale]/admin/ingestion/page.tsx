@@ -3,17 +3,19 @@ import { redirect } from "@/i18n/navigation";
 import { desc } from "drizzle-orm";
 import { db } from "@/server/db";
 import { ingestionRun } from "@maqrivo/db";
-import { getSessionContext } from "@/server/session";
+import { getSessionContext, isAdmin } from "@/server/session";
 import { TriggerButton } from "./trigger-button";
 
 /**
  * Internal ingestion/debug view. Auth-gated; not linked from the main nav.
- * For the single-user MVP every signed-in user is an administrator.
+ * Trigger buttons are admin-only (the first registered account); the runs
+ * list stays visible to every signed-in user as read-only telemetry.
  */
 export default async function AdminIngestionPage() {
   const t = await getTranslations("Admin");
   const session = await getSessionContext();
   if (!session) redirect({ href: "/sign-in", locale: "fr" });
+  const admin = await isAdmin();
 
   const runs = await db.select().from(ingestionRun).orderBy(desc(ingestionRun.startedAt)).limit(30);
 
@@ -21,15 +23,19 @@ export default async function AdminIngestionPage() {
     <div className="mx-auto max-w-4xl px-4 py-8">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight text-zinc-900">{t("title")}</h1>
-        <div className="flex gap-2">
-          <TriggerButton jobKey="promotion-expiry" />
-          <TriggerButton jobKey="pantry-consumption" />
-          <TriggerButton jobKey="openprices-sync" />
-          <TriggerButton jobKey="catalogue-sync" />
-          <TriggerButton jobKey="page-extraction" />
-          <TriggerButton jobKey="store-discovery" />
-          <TriggerButton jobKey="plan-refresh" />
-        </div>
+        {admin ? (
+          <div className="flex gap-2">
+            <TriggerButton jobKey="promotion-expiry" />
+            <TriggerButton jobKey="pantry-consumption" />
+            <TriggerButton jobKey="openprices-sync" />
+            <TriggerButton jobKey="catalogue-sync" />
+            <TriggerButton jobKey="page-extraction" />
+            <TriggerButton jobKey="store-discovery" />
+            <TriggerButton jobKey="plan-refresh" />
+          </div>
+        ) : (
+          <p className="text-sm text-zinc-500">{t("adminOnly")}</p>
+        )}
       </div>
 
       {runs.length === 0 ? (

@@ -498,7 +498,8 @@
     "succeeded": "réussie",
     "failed": "échouée",
     "partial": "partielle",
-    "notAuthorized": "Accès réservé à l'administration"
+    "notAuthorized": "Accès réservé à l'administration",
+    "adminOnly": "Seul le premier compte enregistré peut lancer les jobs d'ingestion."
   },
   "Assistant": {
     "title": "Assistant",

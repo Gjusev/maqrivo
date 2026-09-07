@@ -498,7 +498,8 @@
     "succeeded": "succeeded",
     "failed": "failed",
     "partial": "partial",
-    "notAuthorized": "Administrators only"
+    "notAuthorized": "Administrators only",
+    "adminOnly": "Only the first registered account can run ingestion jobs."
   },
   "Assistant": {
     "title": "Assistant",

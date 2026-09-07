@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
+import { isAdminUser } from "./admin";
 import { db } from "./db";
 import { auth } from "./auth";
 import { user as userTable, usersProfile } from "@maqrivo/db";
@@ -36,3 +37,31 @@ export async function loadUserContext(userId: string): Promise<SessionContext | 
    if (!session?.user) return null;
   return loadUserContext(session.user.id);
  }
+
+/**
+ * Process-lifetime cache of the earliest-created user id. The first account
+ * is the admin and registration order never changes in practice, so the id
+ * is resolved once per process and reused (no per-request admin lookup).
+ */
+let cachedEarliestUserId: string | null | undefined;
+
+/**
+ * Admin gate for ingestion triggering and global-catalog mutations: the
+ * signed-in user must be the earliest-created account (the first registered
+ * user). False when signed out or when no users exist yet.
+ */
+export async function isAdmin(): Promise<boolean> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session?.user) return false;
+  if (cachedEarliestUserId === undefined) {
+    const row = (
+      await db
+        .select({ id: userTable.id })
+        .from(userTable)
+        .orderBy(asc(userTable.createdAt), asc(userTable.id))
+        .limit(1)
+    )[0];
+    cachedEarliestUserId = row?.id ?? null;
+  }
+  return isAdminUser(session.user.id, cachedEarliestUserId);
+}

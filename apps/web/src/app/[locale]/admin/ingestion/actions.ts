@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { triggerJob } from "@/server/jobs/queue";
-import { getSessionContext } from "@/server/session";
+import { getSessionContext, isAdmin } from "@/server/session";
 
 export async function triggerJobAction(
   job:
@@ -15,7 +15,7 @@ export async function triggerJobAction(
     | "plan-refresh",
 ): Promise<{ ok: boolean }> {
   const session = await getSessionContext();
-  if (!session) return { ok: false };
+  if (!session || !(await isAdmin())) return { ok: false };
   try {
     await triggerJob(job);
     revalidatePath("/admin/ingestion");
