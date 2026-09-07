@@ -97,7 +97,8 @@ test.describe.serial("catalogues — catalogue flow", () => {
     await page.waitForURL(/offers\/catalogues\/./, { timeout: 10000 });
 
     await expect(page.getByRole("link", { name: "← Retour" })).toBeVisible();
-    await expect(page.locator("img[src*='/api/catalogues/pages/']").first()).toBeVisible();
+    // next/image wraps the page photo (src is /_next/image?url=...); select by role+alt.
+    await expect(page.getByRole("img", { name: /Photo de la page|Page photo/ }).first()).toBeVisible();
     // Visible but NEVER clicked: extraction is a paid AI call.
     await expect(page.getByRole("button", { name: "Extraire les offres" }).first()).toBeVisible();
   });
@@ -112,7 +113,7 @@ test.describe.serial("catalogues — catalogue flow", () => {
       .first();
     await withPagesCard.getByRole("link").click();
     await page.waitForURL(/offers\/catalogues\/./, { timeout: 10000 });
-    await page.locator("img[src*='/api/catalogues/pages/']").first().click();
+    await page.getByRole("img", { name: /Photo de la page|Page photo/ }).first().click();
     const lightbox = page.getByRole("dialog");
     await expect(lightbox).toBeVisible();
 
