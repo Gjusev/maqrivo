@@ -42,7 +42,13 @@ export async function saveImage(
   const hash = createHash("sha256").update(file.bytes).digest("hex");
   const ext = EXTENSION_BY_MIME[file.mime];
   const storageKey = `${folder}/${hash.slice(0, 16)}.${ext}`;
-  const target = path.join(uploadRoot(), storageKey);
+  // Defence against path traversal via the folder argument: resolve inside
+  // the upload root before writing (mirrors readImage's guard).
+  const root = uploadRoot();
+  const target = path.resolve(root, storageKey);
+  if (!target.startsWith(root + path.sep)) {
+    throw new UploadRejectedError("invalid folder");
+  }
   await mkdir(path.dirname(target), { recursive: true });
   await writeFile(target, file.bytes);
   return { storageKey, contentHash: hash };

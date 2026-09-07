@@ -290,16 +290,19 @@ export async function listReceipts(): Promise<
 }
 
 export async function getReceiptLines(receiptId: string): Promise<ReceiptLineView[]> {
+  const session = await getSessionContext();
+  if (!session) return [];
+  const parent = (await db.select().from(receipt).where(eq(receipt.id, receiptId)).limit(1))[0];
+  if (!parent || parent.userId !== session.userId) return [];
   const rows = await db
     .select({ line: receiptLine, product: product, concept: foodConcept })
     .from(receiptLine)
     .leftJoin(product, eq(receiptLine.productId, product.id))
     .leftJoin(foodConcept, eq(product.foodConceptId, foodConcept.id))
     .where(eq(receiptLine.receiptId, receiptId));
-  const session = await getSessionContext();
   return Promise.all(
     rows.map(async ({ line, product: p, concept }) => {
-      const suggestion = !line.productId && session ? await suggestProductForLabel(line.label, session.userId) : null;
+      const suggestion = !line.productId ? await suggestProductForLabel(line.label, session.userId) : null;
       return {
         id: line.id,
         label: line.label,

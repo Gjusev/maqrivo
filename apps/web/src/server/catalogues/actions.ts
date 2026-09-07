@@ -66,6 +66,9 @@ export async function extractPageAction(pageId: string): Promise<ExtractPageResu
  * nothing (the row is stored even for empty results).
  */
 export async function getPageCandidates(pageId: string): Promise<CatalogueCandidate[] | null> {
+  const session = await getSessionContext();
+  if (!session) return null;
+
   const rows = await db
     .select()
     .from(aiExtraction)
@@ -259,7 +262,7 @@ async function resolveStore(
   return pool[0]!.store.id;
 }
 
-export async function recomputeTotal(planId: string): Promise<void> {
+async function recomputeTotal(planId: string): Promise<void> {
   const items = await db.select().from(shoppingItem).where(eq(shoppingItem.shoppingPlanId, planId));
   const active = items.filter((i) => i.status !== "skipped");
   const total = active.reduce((sum, i) => sum + i.effectiveCostCents, 0);

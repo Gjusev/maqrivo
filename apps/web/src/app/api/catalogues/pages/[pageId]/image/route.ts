@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
 import { db } from "@/server/db";
-import { cataloguePage } from "@maqrivo/db";
+import { cataloguePage, sourceEvidence } from "@maqrivo/db";
 import { auth } from "@/server/auth";
 import { readImage } from "@/server/storage";
 
@@ -14,6 +14,15 @@ export async function GET(_request: Request, { params }: { params: Promise<{ pag
 
   const page = (await db.select().from(cataloguePage).where(eq(cataloguePage.id, pageId)).limit(1))[0];
   if (!page?.imageKey) return NextResponse.json({ error: "not-found" }, { status: 404 });
+
+  // Page photos resolve to their evidence row: synced leaflets are global
+  // (no ownerUserId), user uploads are personal — same rule as /api/evidence.
+  const evidence = (
+    await db.select().from(sourceEvidence).where(eq(sourceEvidence.storageKey, page.imageKey)).limit(1)
+  )[0];
+  if (evidence?.ownerUserId && evidence.ownerUserId !== session.user.id) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
 
   try {
     const buffer = await readImage(page.imageKey);
