@@ -10,7 +10,9 @@ import { aiExtraction, catalogue, cataloguePage, store, userStorePrefs } from "@
 import { getAIProvider } from "../ai/provider";
 import { readImage } from "../storage";
 import { matchesScope } from "../ingestion/offers-scope";
+import { loadProductCandidates } from "../ingestion/promotions";
 import { candidatesFromExtraction, type CatalogueCandidate } from "./extraction";
+import { promoteCandidate } from "./auto-confirm";
 
 /** catalogue-v2 — moved verbatim from the manual action; keep the shape stable (plan 006 reads it). */
 const SYSTEM_PROMPT =
@@ -119,14 +121,16 @@ export function shouldAttempt(lastAttemptAt: Date | null, lastValid: boolean, no
  * Nightly sweep over unprocessed pages (the pg-boss `page-extraction` job).
  * Paid AI calls are bounded by the budget guard; the kill-switch is read
  * per invocation (inside this function, not at import) so flipping
- * `CATALOGUE_AUTO_EXTRACT` needs no restart.
+ * `CATALOGUE_AUTO_EXTRACT` needs no restart. After the AI phase, candidates
+ * passing the deterministic auto-confirm gate (plan 006) are promoted; the
+ * rest stay review candidates on the catalogue page.
  */
 export async function runExtractionSweep(
   now: Date = new Date(),
-): Promise<{ extracted: number; skipped: number; failed: number }> {
-  if (process.env.CATALOGUE_AUTO_EXTRACT !== "1") return { extracted: 0, skipped: 0, failed: 0 }; // kill-switch, default OFF
+): Promise<{ extracted: number; skipped: number; failed: number; promoted: number }> {
+  if (process.env.CATALOGUE_AUTO_EXTRACT !== "1") return { extracted: 0, skipped: 0, failed: 0, promoted: 0 }; // kill-switch, default OFF
   const provider = getAIProvider();
-  if (!provider.configured) return { extracted: 0, skipped: 0, failed: 0 };
+  if (!provider.configured) return { extracted: 0, skipped: 0, failed: 0, promoted: 0 };
   const parsedBudget = Number.parseInt(process.env.CATALOGUE_EXTRACT_BUDGET ?? "", 10);
   const budget = Number.isFinite(parsedBudget) && parsedBudget >= 0 ? parsedBudget : 20; // pages per run
 
@@ -145,7 +149,12 @@ export async function runExtractionSweep(
   // The set is small in practice — the sync's politeness budgets cap it
   // (3 catalogues × 12 pages per store per run).
   const pages = await db
-    .select({ pageId: cataloguePage.id, storeId: catalogue.storeId, retailerId: catalogue.retailerId })
+    .select({
+      pageId: cataloguePage.id,
+      catalogueId: catalogue.id,
+      storeId: catalogue.storeId,
+      retailerId: catalogue.retailerId,
+    })
     .from(cataloguePage)
     .innerJoin(catalogue, eq(cataloguePage.catalogueId, catalogue.id))
     .where(and(isNull(cataloguePage.processedAt), isNotNull(cataloguePage.imageKey)))
@@ -155,6 +164,7 @@ export async function runExtractionSweep(
   let skipped = 0;
   let failed = 0;
   let attempted = 0;
+  const successes: { catalogueId: string; pageId: string; candidates: CatalogueCandidate[] }[] = [];
   for (const page of pages) {
     if (attempted >= budget) break;
     if (!matchesScope(page, enabledStoreIds, enabledRetailerIds)) continue;
@@ -184,10 +194,36 @@ export async function runExtractionSweep(
     const result = await runPageExtraction({ pageId: page.pageId, userId: null });
     if (result.ok) {
       extracted += 1;
+      if (result.candidates && result.candidates.length > 0) {
+        successes.push({ catalogueId: page.catalogueId, pageId: page.pageId, candidates: result.candidates });
+      }
     } else {
       failed += 1;
       console.error(`[page-extraction] ${page.pageId}: ${(result.error ?? "unknown").slice(0, 120)}`);
     }
   }
-  return { extracted, skipped, failed };
+
+  // Auto-confirm phase: candidates whose signals are strictly deterministic
+  // (printed price + printed date + EXACT product match) become promotions
+  // without a human tap — see auto-confirm.ts for the gate and the
+  // insert-then-check route. One product-catalog load for the whole batch.
+  let promoted = 0;
+  if (successes.length > 0) {
+    const productCandidates = await loadProductCandidates();
+    for (const { catalogueId, pageId, candidates } of successes) {
+      for (const candidate of candidates) {
+        try {
+          const result = await promoteCandidate(candidate, { catalogueId, pageId }, productCandidates);
+          if (result.ok && !result.duplicate) promoted += 1;
+        } catch (err) {
+          console.error(
+            `[page-extraction] promote ${pageId}/${String(candidate.index)}: ${
+              err instanceof Error ? err.message.slice(0, 120) : "failed"
+            }`,
+          );
+        }
+      }
+    }
+  }
+  return { extracted, skipped, failed, promoted };
 }

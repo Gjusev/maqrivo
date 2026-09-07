@@ -1,17 +1,19 @@
 /**
  * pg-boss job queue (Postgres-backed, in-process). Started from
  * instrumentation.ts in the server runtime; never during build.
- * Schedules: expiry + Open Prices sync daily, off-minute per policy.
+ * Schedules: expiry + Open Prices sync + catalogue pipeline daily, store
+ * discovery weekly (Mondays) — off-minute per policy.
  */
 import { runOpenPricesSync } from "../ingestion/openprices-sync";
 import { runPromotionExpiry } from "../ingestion/promotions";
 import { runCatalogueSync } from "../ingestion/catalogue-sync";
 import { runExtractionSweep } from "../catalogues/extraction-runner";
+import { runStoreDiscoverySweep } from "../stores/discovery";
 // Flipbook adapters register themselves on import — a source must be
 // registered for the catalogue-sync job to touch that retailer.
 import "../integrations/retailers/adapters";
 
-const JOBS = ["promotion-expiry", "openprices-sync", "catalogue-sync", "page-extraction"] as const;
+const JOBS = ["promotion-expiry", "openprices-sync", "catalogue-sync", "page-extraction", "store-discovery"] as const;
 type JobName = (typeof JOBS)[number];
 
 let bossInstance: import("pg-boss").PgBoss | null = null;
@@ -42,6 +44,7 @@ export async function startWorker(connectionString: string): Promise<void> {
   await boss.schedule("openprices-sync", "43 5 * * *");
   await boss.schedule("catalogue-sync", "09 6 * * *");
   await boss.schedule("page-extraction", "41 6 * * *"); // after catalogue-sync (09 6), off-minute
+  await boss.schedule("store-discovery", "23 4 * * 1"); // Mondays 04:23, off-minute
 
   bossInstance = boss;
   console.log("[pg-boss] worker started");
@@ -62,8 +65,11 @@ async function runJob(name: JobName): Promise<void> {
   } else if (name === "page-extraction") {
     const r = await runExtractionSweep();
     console.log(
-      `[job] page-extraction: ${String(r.extracted)} extracted / ${String(r.skipped)} skipped / ${String(r.failed)} failed`,
+      `[job] page-extraction: ${String(r.extracted)} extracted / ${String(r.skipped)} skipped / ${String(r.failed)} failed / ${String(r.promoted)} auto-confirmed`,
     );
+  } else if (name === "store-discovery") {
+    const r = await runStoreDiscoverySweep();
+    console.log(`[job] store-discovery: ${String(r.users)} users / ${String(r.discovered)} discovered`);
   }
 }
 

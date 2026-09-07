@@ -49,7 +49,7 @@ describe("runExtractionSweep kill-switch", () => {
     const prev = process.env.CATALOGUE_AUTO_EXTRACT;
     process.env.CATALOGUE_AUTO_EXTRACT = "0";
     try {
-      await expect(runExtractionSweep()).resolves.toEqual({ extracted: 0, skipped: 0, failed: 0 });
+      await expect(runExtractionSweep()).resolves.toEqual({ extracted: 0, skipped: 0, failed: 0, promoted: 0 });
     } finally {
       if (prev === undefined) delete process.env.CATALOGUE_AUTO_EXTRACT;
       else process.env.CATALOGUE_AUTO_EXTRACT = prev;

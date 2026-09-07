@@ -4,6 +4,7 @@ import { useState, type SubmitEvent } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { createCatalogueAction } from "@/server/catalogues/actions";
+import { CATALOGUE_RETAILERS } from "@/lib/retailers";
 import { PlusIcon } from "@phosphor-icons/react/dist/csr/Plus";
 
 export function NewCatalogueButton({ variant = "secondary" }: { variant?: "primary" | "secondary" }) {
@@ -51,9 +52,9 @@ export function NewCatalogueButton({ variant = "secondary" }: { variant?: "prima
                 <div>
                   <label htmlFor="cat-retailer">{t("retailerTitle")}</label>
                   <select id="cat-retailer" name="retailer" defaultValue="carrefour">
-                    {["carrefour", "intermarche", "lidl", "leclerc", "monoprix", "franprix", "g20", "independent"].map((slug) => (
-                      <option key={slug} value={slug}>
-                        {slug}
+                    {CATALOGUE_RETAILERS.map((retailer) => (
+                      <option key={retailer.slug} value={retailer.slug}>
+                        {retailer.label} · {t(retailer.source === "auto" ? "sourceAuto" : "sourcePhoto")}
                       </option>
                     ))}
                   </select>

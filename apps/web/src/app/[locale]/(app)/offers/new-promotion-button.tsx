@@ -4,6 +4,7 @@ import { useState, type SubmitEvent } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { createManualPromotionAction } from "@/server/ingestion/promotion-actions";
+import { CATALOGUE_RETAILERS } from "@/lib/retailers";
 import { PlusIcon } from "@phosphor-icons/react/dist/csr/Plus";
 
 const MECHANISMS = [
@@ -18,6 +19,7 @@ const MECHANISMS = [
 export function NewPromotionButton({ variant = "secondary" }: { variant?: "primary" | "secondary" }) {
   const t = useTranslations("Offers");
   const tc = useTranslations("Common");
+  const tcat = useTranslations("Catalogues");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [mechanism, setMechanism] = useState<(typeof MECHANISMS)[number]>("PROMO_PRICE");
@@ -82,9 +84,9 @@ export function NewPromotionButton({ variant = "secondary" }: { variant?: "prima
                 <div>
                   <label htmlFor="retailer">{t("retailer")}</label>
                   <select id="retailer" name="retailer" defaultValue="carrefour">
-                    {["carrefour", "intermarche", "lidl", "leclerc", "monoprix", "franprix", "g20", "independent"].map((slug) => (
-                      <option key={slug} value={slug}>
-                        {slug}
+                    {CATALOGUE_RETAILERS.map((retailer) => (
+                      <option key={retailer.slug} value={retailer.slug}>
+                        {retailer.label} · {tcat(retailer.source === "auto" ? "sourceAuto" : "sourcePhoto")}
                       </option>
                     ))}
                   </select>

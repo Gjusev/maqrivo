@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { triggerJobAction } from "./actions";
 
-type JobKey = "promotion-expiry" | "openprices-sync" | "catalogue-sync" | "page-extraction";
+type JobKey = "promotion-expiry" | "openprices-sync" | "catalogue-sync" | "page-extraction" | "store-discovery";
 
 const LABELS: Record<JobKey, string> = {
   "promotion-expiry": "expiry",
   "openprices-sync": "openprices",
   "catalogue-sync": "catalogues",
   "page-extraction": "extract",
+  "store-discovery": "stores",
 };
 
 export function TriggerButton({ jobKey }: { jobKey: JobKey }) {

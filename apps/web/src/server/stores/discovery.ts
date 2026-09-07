@@ -4,7 +4,7 @@
  * (passive by default — enabling is the user's choice). Failures of any
  * single source are recorded as warnings, never fatal (isolation rule).
  */
-import { and, eq, gte, lte } from "drizzle-orm";
+import { and, eq, gte, isNotNull, lte } from "drizzle-orm";
 import { distanceMeters, snapToGrid } from "@maqrivo/core";
 import { db } from "../db";
 import { ingestionRun, retailer, store, userStorePrefs, usersProfile } from "@maqrivo/db";
@@ -204,6 +204,64 @@ export async function runStoreDiscovery(userId: string): Promise<DiscoveryResult
       })
       .where(eq(ingestionRun.id, run.id));
     return result;
+  } catch (err) {
+    await db
+      .update(ingestionRun)
+      .set({
+        status: "failed",
+        finishedAt: new Date(),
+        error: err instanceof Error ? err.message : String(err),
+        warnings,
+      })
+      .where(eq(ingestionRun.id, run.id));
+    throw err;
+  }
+}
+
+/** Weekly sweep cap — personal-deploy scale; revisit for growth (plan 006). */
+const SWEEP_USER_CAP = 20;
+
+/**
+ * Weekly entry (pg-boss `store-discovery`, Mondays 04:23): refresh the store
+ * map around every user with a home location, capped per run. Each user's
+ * refresh is isolated — one failing user becomes a warning, never a failed
+ * sweep — and the batch itself records one ingestionRun row (per-user rows
+ * come from runStoreDiscovery).
+ */
+export async function runStoreDiscoverySweep(): Promise<{ users: number; discovered: number }> {
+  const run = (
+    await db.insert(ingestionRun).values({ source: "discovery-sweep", kind: "store_refresh", status: "running" }).returning()
+  )[0]!;
+
+  const warnings: string[] = [];
+  try {
+    const located = await db
+      .selectDistinct({ userId: usersProfile.userId })
+      .from(usersProfile)
+      .where(and(isNotNull(usersProfile.homeLat), isNotNull(usersProfile.homeLng)))
+      .limit(SWEEP_USER_CAP);
+
+    let discovered = 0;
+    for (const { userId } of located) {
+      try {
+        const result = await runStoreDiscovery(userId);
+        discovered += result.discovered;
+        warnings.push(...result.warnings);
+      } catch (err) {
+        warnings.push(`user ${userId}: ${err instanceof Error ? err.message : "failed"}`);
+      }
+    }
+
+    await db
+      .update(ingestionRun)
+      .set({
+        status: warnings.length === 0 ? "succeeded" : "partial",
+        finishedAt: new Date(),
+        stats: { users: located.length, discovered },
+        warnings,
+      })
+      .where(eq(ingestionRun.id, run.id));
+    return { users: located.length, discovered };
   } catch (err) {
     await db
       .update(ingestionRun)

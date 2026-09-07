@@ -16,6 +16,7 @@ import {
   userStorePrefs,
 } from "@maqrivo/db";
 import { getSessionContext } from "@/server/session";
+import { getNewOffersDigest, type NewOffersDigestItem } from "@/server/ingestion/digest";
 import { formatMoney, totalNutrition, type IngredientNutrition, type NutritionPer100 } from "@maqrivo/core";
 import { CalendarBlankIcon } from "@phosphor-icons/react/dist/ssr/CalendarBlank";
 import { CheckIcon } from "@phosphor-icons/react/dist/ssr/Check";
@@ -79,6 +80,10 @@ export default async function TodayPage() {
   };
   const setupComplete = Object.values(setupDone).every(Boolean);
 
+  // "New at your stores": promotions ingested this week within the user's
+  // two-tier store scope — the visibility surface for overnight automation.
+  const digest = await getNewOffersDigest(session.userId);
+
   const todayIso = new Date().toISOString().slice(0, 10);
 
   if (!plan) {
@@ -87,6 +92,7 @@ export default async function TodayPage() {
         <PageHeader title={t("title")} />
         <div className="space-y-4">
           {!setupComplete ? <SetupChecklist done={setupDone} /> : null}
+          {digest.total > 0 ? <NewOffersCard items={digest.items} total={digest.total} locale={locale} /> : null}
           <EmptyState
             icon={CalendarBlankIcon}
             title={t("noPlan")}
@@ -215,6 +221,8 @@ export default async function TodayPage() {
           )}
         </section>
 
+        {digest.total > 0 ? <NewOffersCard items={digest.items} total={digest.total} locale={locale} /> : null}
+
         {shopping ? (
           <Link href="/shopping" className="card flex items-center justify-between p-4 transition-colors hover:border-zinc-300">
             <span className="text-sm font-medium text-zinc-700">{t("shoppingCard")} →</span>
@@ -273,6 +281,47 @@ async function SetupChecklist({
             </Link>
           </li>
         ))}
+      </ul>
+    </section>
+  );
+}
+
+/** Promotions that arrived this week within the user's store scope (plan 006 digest). */
+async function NewOffersCard({
+  items,
+  total,
+  locale,
+}: {
+  items: NewOffersDigestItem[];
+  total: number;
+  locale: string;
+}) {
+  const t = await getTranslations("Today");
+  return (
+    <section className="card p-4">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold text-zinc-900">{t("newOffers.title")}</h2>
+        <Link href="/offers" className="shrink-0 text-xs font-medium text-brand-700 hover:text-brand-800">
+          {t("newOffers.seeAll")} ({String(total)}) →
+        </Link>
+      </div>
+      <ul className="mt-2 space-y-1">
+        {items.map((offer) => {
+          const priceCents = offer.promoPriceCents ?? offer.regularPriceCents ?? offer.pricePerKgCents;
+          const perKg = offer.promoPriceCents == null && offer.regularPriceCents == null;
+          return (
+            <li key={offer.id} className="flex items-baseline justify-between gap-2 text-sm">
+              <span className="min-w-0 flex-1 truncate text-zinc-700">{offer.descriptionRaw}</span>
+              <span className="shrink-0 text-xs text-zinc-500">{offer.retailerName}</span>
+              {priceCents != null ? (
+                <span className="shrink-0 text-xs font-medium tabular-nums text-zinc-900">
+                  {formatMoney({ amountCents: priceCents, currency: "EUR" }, locale)}
+                  {perKg ? "/kg" : ""}
+                </span>
+              ) : null}
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
