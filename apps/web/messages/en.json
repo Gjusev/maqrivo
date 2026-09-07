@@ -516,7 +516,13 @@
   "Settings": {
     "title": "Settings",
     "language": "Language",
-    "comingSoon": "More settings arrive in later iterations."
+    "comingSoon": "More settings arrive in later iterations.",
+    "openPrices": {
+      "title": "Open Prices contributions",
+      "enabled": "On — prices you confirm on receipts are published to the Open Prices commons.",
+      "disabled": "Off. To contribute your confirmed prices, set OPENPRICES_WRITE_ENABLED=true with your Open Prices account (username/password) in the deployment env.",
+      "credentialsMissing": "On, but the Open Prices username/password env vars are missing."
+    }
   },
   "Catalogues": {
     "cataloguesTitle": "Leaflets",
@@ -598,5 +604,13 @@
     "extractFailed": "Extraction failed",
     "confirmFailed": "Confirmation failed",
     "needStores": "Add and enable a store first to upload receipts."
+  },
+  "Notifications": {
+    "enable": "Enable notifications",
+    "enabled": "Notifications on — we'll ping you when new deals land at your stores.",
+    "denied": "Notification permission is blocked in your browser settings.",
+    "unsupported": "This browser does not support push notifications.",
+    "subscribed": "You're set — see you at the next drop.",
+    "dailyTitle": "New deals at your stores"
   }
 }

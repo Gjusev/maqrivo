@@ -516,7 +516,13 @@
   "Settings": {
     "title": "Réglages",
     "language": "Langue",
-    "comingSoon": "D'autres réglages arriveront avec les itérations suivantes."
+    "comingSoon": "D'autres réglages arriveront avec les itérations suivantes.",
+    "openPrices": {
+      "title": "Contribución a Open Prices",
+      "enabled": "Activada: los precios que confirmas en tickets se publican en los datos abiertos de Open Prices.",
+      "disabled": "Desactivada. Para contribuir tus precios confirmados, define OPENPRICES_WRITE_ENABLED=true junto a tu usuario y contraseña de Open Prices en el entorno de despliegue.",
+      "credentialsMissing": "Activada, pero faltan el usuario o la contraseña de Open Prices en el entorno."
+    }
   },
   "Catalogues": {
     "cataloguesTitle": "Prospectus",
@@ -598,5 +604,13 @@
     "extractFailed": "L'extraction a échoué",
     "confirmFailed": "Échec de la confirmation",
     "needStores": "Ajoutez et activez d'abord un magasin pour déposer des tickets."
+  },
+  "Notifications": {
+    "enable": "Activar notificaciones",
+    "enabled": "Notificaciones activas: te avisaremos cuando haya ofertas nuevas en tus tiendas.",
+    "denied": "El permiso de notificaciones está bloqueado en los ajustes del navegador.",
+    "unsupported": "Este navegador no soporta notificaciones push.",
+    "subscribed": "Listo, nos vemos en la próxima tanda.",
+    "dailyTitle": "Novedades en tus tiendas"
   }
 }
