@@ -2,12 +2,13 @@
  * Promotion service: manual creation through the same normalized model as
  * ingested promotions, plus the daily expiry sweep.
  */
-import { and, desc, eq, gte, isNull, lt, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, lt, or, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../db";
-import { ingestionRun, product, promotion, promotionProductMatch, retailer, store } from "@maqrivo/db";
+import { ingestionRun, product, promotion, promotionProductMatch, retailer, store, userStorePrefs } from "@maqrivo/db";
 import { getSessionContext } from "../session";
 import { resolveProduct, type ProductCandidate, type ExternalProductRef } from "@maqrivo/core";
+import { type OffersScope } from "./offers-scope";
 
 export const manualPromotionSchema = z.object({
   retailerSlug: z.string().min(2).max(40),
@@ -158,20 +159,62 @@ export async function runPromotionExpiry(): Promise<{ expired: number }> {
   return { expired: expired.length };
 }
 
-/** Active promotions for the Offers page (valid window overlapping today). */
-export async function listActivePromotions() {
+export type ActivePromotion = {
+  promotion: typeof promotion.$inferSelect;
+  retailerName: string;
+  retailerSlug: string;
+  storeName: string | null;
+};
+
+/**
+ * Active promotions for the Offers page (valid window overlapping today).
+ * Scope "enabled-stores" applies the two-tier my-stores gate — the SQL mirror
+ * of matchesScope() in ./offers-scope: a store-keyed promotion needs an
+ * enabled store; a national one (storeId null) needs any enabled store at its
+ * retailer. Keep both shapes in sync.
+ */
+export async function listActivePromotions(options?: {
+  userId?: string;
+  scope?: OffersScope;
+}): Promise<{ promotions: ActivePromotion[]; total: number }> {
   const today = new Date().toISOString().slice(0, 10);
-  return db
+  const active = and(
+    sql`${promotion.verification} <> 'EXPIRED'`,
+    or(gte(promotion.validUntil, today), isNull(promotion.validUntil)),
+  );
+
+  let scoped: SQL | undefined;
+  if (options?.scope === "enabled-stores" && options.userId) {
+    const enabled = await db
+      .select({ storeId: store.id, retailerId: store.retailerId })
+      .from(userStorePrefs)
+      .innerJoin(store, eq(userStorePrefs.storeId, store.id))
+      .where(and(eq(userStorePrefs.userId, options.userId), eq(userStorePrefs.enabled, true)));
+    const storeIds = [...new Set(enabled.map((row) => row.storeId))];
+    const retailerIds = [...new Set(enabled.flatMap((row) => (row.retailerId ? [row.retailerId] : [])))];
+    const tiers = [
+      storeIds.length > 0 ? inArray(promotion.storeId, storeIds) : undefined,
+      retailerIds.length > 0
+        ? and(isNull(promotion.storeId), inArray(promotion.retailerId, retailerIds))
+        : undefined,
+    ].filter((tier): tier is SQL => tier != null);
+    scoped = tiers.length > 0 ? or(...tiers) : sql`false`; // no enabled store → nothing matches
+  }
+
+  const where = scoped ? and(active, scoped) : active;
+
+  const promotions = await db
     .select({ promotion: promotion, retailerName: retailer.name, retailerSlug: retailer.slug, storeName: store.name })
     .from(promotion)
     .innerJoin(retailer, eq(promotion.retailerId, retailer.id))
     .leftJoin(store, eq(promotion.storeId, store.id))
-    .where(
-      and(
-        sql`${promotion.verification} <> 'EXPIRED'`,
-        or(gte(promotion.validUntil, today), isNull(promotion.validUntil)),
-      ),
-    )
+    .where(where)
     .orderBy(desc(promotion.createdAt))
     .limit(100);
+
+  // Sibling count: the list is capped at 100 — let the UI say "showing 100 of N"
+  // instead of truncating silently.
+  const total = (await db.select({ total: sql<number>`count(*)::int` }).from(promotion).where(where))[0]!.total;
+
+  return { promotions, total };
 }

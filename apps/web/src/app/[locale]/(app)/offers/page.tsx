@@ -2,21 +2,32 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 import { listActivePromotions } from "@/server/ingestion/promotions";
+import { type OffersScope } from "@/server/ingestion/offers-scope";
 import { promotionDealAssessments, type PromotionDeal } from "@/server/prices/history";
 import { db } from "@/server/db";
+import { getSessionContext } from "@/server/session";
 import { formatMoney, type PromotionMechanism } from "@maqrivo/core";
 import { PercentIcon } from "@phosphor-icons/react/dist/ssr/Percent";
-import { desc, eq, isNotNull } from "drizzle-orm";
+import { desc, eq, isNotNull, sql } from "drizzle-orm";
 import { catalogue, retailer } from "@maqrivo/db";
 import { NewPromotionButton } from "./new-promotion-button";
 import { NewCatalogueButton } from "./catalogues/new-catalogue-button";
+import { FilterBar } from "./filter-bar";
 import { Link } from "@/i18n/navigation";
 
-export default async function OffersPage() {
+export default async function OffersPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const t = await getTranslations("Offers");
   const te = await getTranslations("Evidence");
   const locale = await getLocale();
-  const promotions = await listActivePromotions();
+  // Default scope: the user's enabled stores ("My stores" chip); ?scope=all opts out.
+  const scope: OffersScope = (await searchParams).scope === "all" ? "all" : "enabled-stores";
+  const session = await getSessionContext();
+  const { promotions, total } = await listActivePromotions({ userId: session?.userId, scope });
+
   // Deal quality vs observed history — only for promotions with a directly
   // comparable price on a matched product; the rest stay unlabelled.
   const deals = await promotionDealAssessments(
@@ -35,6 +46,12 @@ export default async function OffersPage() {
     .where(isNotNull(catalogue.id))
     .orderBy(desc(catalogue.createdAt))
     .limit(10);
+  const catalogueTotal = (
+    await db
+      .select({ catalogueTotal: sql<number>`count(*)::int` })
+      .from(catalogue)
+      .where(isNotNull(catalogue.id))
+  )[0]!.catalogueTotal;
 
   return (
     <>
@@ -65,8 +82,16 @@ export default async function OffersPage() {
               </li>
             ))}
           </ul>
+          {catalogueTotal > catalogues.length ? (
+            <div className="mt-2">
+              <Link href="/offers/catalogues" className="text-xs font-medium text-brand-700 hover:underline">
+                {t("viewAllCatalogues", { count: catalogueTotal })}
+              </Link>
+            </div>
+          ) : null}
         </section>
       ) : null}
+      <FilterBar scope={scope} />
 
       {promotions.length === 0 ? (
         <EmptyState icon={PercentIcon} title={t("noOffers")} action={<NewPromotionButton variant="primary" />} />
@@ -128,6 +153,9 @@ export default async function OffersPage() {
           })}
         </ul>
       )}
+      {promotions.length > 0 && total > promotions.length ? (
+        <p className="mt-2 text-xs text-zinc-400">{t("showingOf", { shown: promotions.length, total })}</p>
+      ) : null}
     </>
   );
 
