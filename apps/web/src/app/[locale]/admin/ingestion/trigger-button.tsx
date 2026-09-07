@@ -10,7 +10,8 @@ type JobKey =
   | "catalogue-sync"
   | "page-extraction"
   | "store-discovery"
-  | "plan-refresh";
+  | "plan-refresh"
+  | "digest-push";
 
 const LABELS: Record<JobKey, string> = {
   "promotion-expiry": "expiry",
@@ -20,6 +21,7 @@ const LABELS: Record<JobKey, string> = {
   "page-extraction": "extract",
   "store-discovery": "stores",
   "plan-refresh": "plan",
+  "digest-push": "push",
 };
 
 export function TriggerButton({ jobKey }: { jobKey: JobKey }) {

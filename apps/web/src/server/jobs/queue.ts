@@ -11,12 +11,13 @@ import { runCatalogueSync } from "../ingestion/catalogue-sync";
 import { runExtractionSweep } from "../catalogues/extraction-runner";
 import { runStoreDiscoverySweep } from "../stores/discovery";
 import { runPantryConsumptionSweep } from "../pantry/loop";
+import { runDailyDigestPush } from "../notifications/daily-push";
 import { runPlanRefreshSweep } from "../optimization/plan-refresh";
 // Flipbook adapters register themselves on import — a source must be
 // registered for the catalogue-sync job to touch that retailer.
 import "../integrations/retailers/adapters";
 
-const JOBS = ["promotion-expiry", "pantry-consumption", "openprices-sync", "catalogue-sync", "page-extraction", "store-discovery", "plan-refresh"] as const;
+const JOBS = ["promotion-expiry", "pantry-consumption", "openprices-sync", "catalogue-sync", "page-extraction", "store-discovery", "plan-refresh", "digest-push"] as const;
 type JobName = (typeof JOBS)[number];
 
 let bossInstance: import("pg-boss").PgBoss | null = null;
@@ -50,6 +51,7 @@ export async function startWorker(connectionString: string): Promise<void> {
   await boss.schedule("page-extraction", "41 6 * * *"); // after catalogue-sync (09 6), off-minute
   await boss.schedule("store-discovery", "23 4 * * 1"); // Mondays 04:23, off-minute
   await boss.schedule("plan-refresh", "19 7 * * 0"); // Sundays 07:19 — after the week's final ingestion, before the shopping week
+  await boss.schedule("digest-push", "03 7 * * *"); // after the 06:41 page extraction — deals settled overnight, ping before breakfast
 
   bossInstance = boss;
   console.log("[pg-boss] worker started");
@@ -81,6 +83,9 @@ async function runJob(name: JobName, data?: { manual?: boolean }): Promise<void>
   } else if (name === "plan-refresh") {
     const r = await runPlanRefreshSweep();
     console.log(`[job] plan-refresh: ${String(r.users)} users / ${String(r.refreshed)} refreshed`);
+  } else if (name === "digest-push") {
+    const r = await runDailyDigestPush();
+    console.log(`[job] digest-push: ${String(r.users)} users / ${String(r.notified)} notified / ${String(r.pruned)} pruned`);
   }
 }
 

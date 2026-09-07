@@ -10,3 +10,4 @@ export * from "./schema/pantry";
 export * from "./schema/plans";
 export * from "./schema/receipts";
 export * from "./schema/ops";
+export * from "./schema/notifications";

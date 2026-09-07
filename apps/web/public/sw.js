@@ -95,3 +95,54 @@ self.addEventListener("fetch", (event) => {
   }
   // Everything else: plain network, no interception.
 });
+
+/*
+ * Web push (daily digest). The server sends JSON: { title, body, url }.
+ * Title/body are pre-translated server-side (the SW has no i18n scope).
+ */
+self.addEventListener("push", (event) => {
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch {
+    payload = {};
+  }
+  const title = typeof payload.title === "string" && payload.title ? payload.title : "Maqrivo";
+  const body = typeof payload.body === "string" ? payload.body : "";
+  const url = typeof payload.url === "string" && payload.url ? payload.url : "/";
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: "/icon.svg",
+      badge: "/icon-maskable.svg",
+      data: { url },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const raw = event.notification.data && event.notification.data.url;
+  const target = new URL(typeof raw === "string" && raw ? raw : "/", self.location.origin).href;
+
+  event.waitUntil(
+    (async () => {
+      const clientList = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const client of clientList) {
+        if (new URL(client.url).origin !== self.location.origin) continue;
+        if (!("focus" in client)) continue;
+        const focused = await client.focus();
+        if (new URL(focused.url).pathname !== new URL(target).pathname) {
+          try {
+            return await focused.navigate(target);
+          } catch {
+            // Cross-origin or preload-locked navigation — the focused app is enough.
+          }
+        }
+        return focused;
+      }
+      return self.clients.openWindow(target);
+    })(),
+  );
+});

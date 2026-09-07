@@ -1,6 +1,7 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { PageHeader } from "@/components/page-header";
+import { NotificationsToggle } from "@/components/notifications-toggle";
 import { EmptyState } from "@/components/empty-state";
 import { db } from "@/server/db";
 import {
@@ -235,6 +236,7 @@ export default async function TodayPage() {
         </section>
 
         {digest.total > 0 ? <NewOffersCard items={digest.items} total={digest.total} locale={locale} /> : null}
+        <NotificationsToggle />
 
         {shopping ? (
           <Link href="/shopping" className="card flex items-center justify-between p-4 transition-colors hover:border-zinc-300">

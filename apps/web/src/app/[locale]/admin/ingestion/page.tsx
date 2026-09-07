@@ -32,6 +32,7 @@ export default async function AdminIngestionPage() {
             <TriggerButton jobKey="page-extraction" />
             <TriggerButton jobKey="store-discovery" />
             <TriggerButton jobKey="plan-refresh" />
+            <TriggerButton jobKey="digest-push" />
           </div>
         ) : (
           <p className="text-sm text-zinc-500">{t("adminOnly")}</p>

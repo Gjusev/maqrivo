@@ -50,6 +50,13 @@
       "when": 1788778429298,
       "tag": "0006_moaning_thundra",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788797103361,
+      "tag": "0007_odd_centennial",
+      "breakpoints": true
     }
   ]
 }

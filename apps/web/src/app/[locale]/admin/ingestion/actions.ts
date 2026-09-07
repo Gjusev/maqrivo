@@ -12,7 +12,8 @@ export async function triggerJobAction(
     | "catalogue-sync"
     | "page-extraction"
     | "store-discovery"
-    | "plan-refresh",
+    | "plan-refresh"
+    | "digest-push",
 ): Promise<{ ok: boolean }> {
   const session = await getSessionContext();
   if (!session || !(await isAdmin())) return { ok: false };
@@ -40,6 +41,9 @@ export async function triggerJobAction(
     } else if (job === "plan-refresh") {
       const { runPlanRefreshSweep } = await import("@/server/optimization/plan-refresh");
       await runPlanRefreshSweep();
+    } else if (job === "digest-push") {
+      const { runDailyDigestPush } = await import("@/server/notifications/daily-push");
+      await runDailyDigestPush();
     } else {
       const { runOpenPricesSync } = await import("@/server/ingestion/openprices-sync");
       await runOpenPricesSync();
