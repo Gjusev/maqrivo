@@ -1,0 +1,15 @@
+{
+  "@id": "fa17e2c0-0000-4a1a-9a00-000000000010",
+  "@name": "cette-semaine",
+  "@nodeType": "mgnl:page",
+  "@path": "/france/catalogue/cette-semaine",
+  "@nodes": [],
+  "title": "Catalogue de cette semaine",
+  "metaTitle": "Catalogue de cette semaine",
+  "link": "https://catalogues.aldi.fr/kw372026/",
+  "mailSubject": "Catalogue de cette semaine",
+  "mgnl:template": "aldi-nord-foundation:pages/leafletDetail",
+  "mgnl:lastModified": "2026-09-02T12:11:52.511Z",
+  "overviewHeadline": "Catalogue de cette semaine",
+  "productDetailsHeadline": "Catalogue de cette semaine"
+}

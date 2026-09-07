@@ -1,0 +1,87 @@
+{
+  "@id": "fa17e2c0-0000-4a1a-9a00-000000000001",
+  "@name": "catalogue",
+  "@nodeType": "mgnl:page",
+  "@path": "/france/catalogue",
+  "@nodes": [],
+  "title": "Catalogues Aldi",
+  "metaTitle": "Catalogues Aldi",
+  "mgnl:template": "aldi-nord-foundation:pages/standard",
+  "mgnl:lastModified": "2026-09-02T12:11:52.511Z",
+  "leaflets": {
+    "@id": "fa17e2c0-0000-4a1a-9a00-000000000002",
+    "@name": "leaflets",
+    "@nodeType": "mgnl:area",
+    "@path": "/france/catalogue/leaflets",
+    "@nodes": ["0"],
+    "mgnl:lastModified": "2026-09-02T12:11:52.511Z",
+    "0": {
+      "@id": "fa17e2c0-0000-4a1a-9a00-000000000003",
+      "@name": "0",
+      "@nodeType": "mgnl:component",
+      "@path": "/france/catalogue/leaflets/0",
+      "@nodes": [],
+      "mgnl:template": "aldi-nord-foundation:components/gridTileLeaflets",
+      "variant": "2columns",
+      "headline": {
+        "@name": "headline",
+        "@nodeType": "mgnl:contentNode",
+        "props": { "text": "Catalogues", "ariaLevel": 0 }
+      },
+      "mgnl:lastModified": "2026-09-02T12:11:52.511Z",
+      "tiles": {
+        "@id": "fa17e2c0-0000-4a1a-9a00-000000000004",
+        "@name": "tiles",
+        "@nodeType": "mgnl:contentNode",
+        "@path": "/france/catalogue/leaflets/0/tiles",
+        "@nodes": ["tiles0", "tiles1", "tiles2"],
+        "mgnl:lastModified": "2026-09-02T12:11:52.511Z",
+        "tiles0": {
+          "@id": "fa17e2c0-0000-4a1a-9a00-000000000005",
+          "@name": "tiles0",
+          "@nodeType": "mgnl:contentNode",
+          "@path": "/france/catalogue/leaflets/0/tiles/tiles0",
+          "@nodes": [],
+          "tileImage": "https://s7g10.scene7.com/is/image/aldinord/Catalogue-Neutre-45",
+          "tileImageTitle": "Catalogue de la semaine dernière",
+          "tileImageAltText": "Catalogue de la semaine dernière",
+          "reference": { "type": "pages", "path": "/catalogue/semaine-derniere" },
+          "description": "Dernière opportunité pour retrouver en magasin nos bons plans de la semaine passée",
+          "title": "Catalogue de la semaine dernière",
+          "linkLabel": "Consulter",
+          "mgnl:lastModified": "2026-09-02T12:11:52.511Z"
+        },
+        "tiles1": {
+          "@id": "fa17e2c0-0000-4a1a-9a00-000000000006",
+          "@name": "tiles1",
+          "@nodeType": "mgnl:contentNode",
+          "@path": "/france/catalogue/leaflets/0/tiles/tiles1",
+          "@nodes": [],
+          "tileImage": "https://s7g10.scene7.com/is/image/aldinord/Catalogue-Neutre-46",
+          "tileImageTitle": "Catalogue de cette semaine",
+          "tileImageAltText": "Catalogue de cette semaine",
+          "reference": { "type": "pages", "path": "/catalogue/cette-semaine" },
+          "description": "Retrouvez chaque semaine de nouveaux bons plans en magasin",
+          "title": "Catalogue de cette semaine",
+          "linkLabel": "Consulter",
+          "mgnl:lastModified": "2026-09-02T12:11:52.511Z"
+        },
+        "tiles2": {
+          "@id": "fa17e2c0-0000-4a1a-9a00-000000000007",
+          "@name": "tiles2",
+          "@nodeType": "mgnl:contentNode",
+          "@path": "/france/catalogue/leaflets/0/tiles/tiles2",
+          "@nodes": [],
+          "tileImage": "https://s7g10.scene7.com/is/image/aldinord/Catalogue-Neutre-47",
+          "tileImageTitle": "Catalogue de la semaine prochaine",
+          "tileImageAltText": "Catalogue de la semaine prochaine",
+          "reference": { "type": "pages", "path": "/catalogue/semaine-prochaine" },
+          "description": "Nos bons plans de la semaine prochaine, dès lundi",
+          "title": "Catalogue de la semaine prochaine",
+          "linkLabel": "Consulter",
+          "mgnl:lastModified": "2026-09-02T12:11:52.511Z"
+        }
+      }
+    }
+  }
+}

@@ -51,6 +51,7 @@ const BRAND_TO_SLUG: Record<string, string> = {
   monoprix: "monoprix",
   franprix: "franprix",
   g20: "g20",
+  aldi: "aldi",
 };
 
 /** "Carrefour City" → carrefour; exact banner match first, banner word second. */

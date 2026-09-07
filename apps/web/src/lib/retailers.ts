@@ -14,6 +14,7 @@ export interface CatalogueRetailer {
 }
 
 export const CATALOGUE_RETAILERS: CatalogueRetailer[] = [
+  { slug: "aldi", label: "Aldi", source: "auto" },
   { slug: "carrefour", label: "Carrefour", source: "photo" },
   { slug: "auchan", label: "Auchan", source: "auto" },
   { slug: "intermarche", label: "Intermarché", source: "auto" },

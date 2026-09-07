@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import {
+  aldiCatalogueFromViewer,
+  aldiLeafletRefs,
+  aldiViewerConfigFromHtml,
+  aldiViewerRefFromDetail,
+} from "../src/server/integrations/retailers/aldi";
+import {
   intermarcheCatalogueMeta,
   intermarcheItemsFromPages,
   intermarchePageImageUrls,
@@ -180,5 +186,85 @@ describe("Monoprix official JSON to catalogues (fixture)", () => {
       pricePerKgCents: 250,
       loyalty: true,
     });
+  });
+});
+
+describe("Aldi Magnolia + iPaper vision pipeline (fixtures)", () => {
+  const refs = aldiLeafletRefs(fixture("aldi/leaflets.json"));
+  const viewer = aldiViewerRefFromDetail(fixture("aldi/detail.json"));
+  const catalogue = aldiCatalogueFromViewer(viewer, textFixture("aldi/viewer.html"));
+
+  it("finds every tile across the leaflets area groups", () => {
+    expect(refs).toHaveLength(3);
+    expect(refs[1]).toMatchObject({
+      title: "Catalogue de cette semaine",
+      coverUrl: "https://s7g10.scene7.com/is/image/aldinord/Catalogue-Neutre-46",
+      referencePath: "/catalogue/cette-semaine",
+    });
+  });
+
+  it("resolves the public viewer link and its slug as externalId", () => {
+    expect(viewer).toMatchObject({
+      externalId: "kw372026",
+      title: "Catalogue de cette semaine",
+      viewerUrl: "https://catalogues.aldi.fr/kw372026/",
+    });
+  });
+
+  it("builds signed page image URLs with the paper uuid and token", () => {
+    expect(catalogue.pageImageUrls[0]).toBe(
+      "https://cdn.ipaper.io/iPaper/Papers/1e2d3b4a-5f6e-4a7b-8c9d-0a1b2c3d4e5f/Pages/1/Zoom.jpg" +
+        "?token=FAKEtoken_0000AAAA1111BBBB2222CCCC3333DDDD" +
+        "&token_path=%2fiPaper%2fPapers%2f1e2d3b4a-5f6e-4a7b-8c9d-0a1b2c3d4e5f%2fPages%2f" +
+        "&expires=1788873621",
+    );
+    expect(catalogue.items).toEqual([]); // vision mode
+    expect(catalogue.sourceUrl).toBe("https://catalogues.aldi.fr/kw372026/");
+  });
+
+  it("unescapes the literal \\u0026 into & in the policy", () => {
+    for (const url of catalogue.pageImageUrls) {
+      expect(url).not.toContain("\\u0026");
+      expect(url).toContain("&token_path=");
+      expect(url).toContain("&expires=");
+    }
+  });
+
+  it("returns null dates when the viewer config carries none", () => {
+    expect(catalogue.validFrom).toBeNull();
+    expect(catalogue.validUntil).toBeNull();
+  });
+
+  it("ISO-ifies dates when the config carries them", () => {
+    const dated = aldiViewerConfigFromHtml(
+      '"aws":{"url":"https://cdn.ipaper.io/iPaper/Papers/uu/","policy":"token=t\\u0026expires=1"},"pages":[1],' +
+        '"config":{"ValidFrom":"2026-09-02T00:00:00Z","ValidUntil":"2026-09-08 23:59:59"},' +
+        '"fallback":{"StartDate":"09/09/2026"}',
+    );
+    expect(dated.validFrom).toBe("2026-09-02");
+    expect(dated.validUntil).toBe("2026-09-08");
+  });
+
+  it("builds every page without capping (12-page cap belongs to the sync layer)", () => {
+    expect(catalogue.pageImageUrls).toHaveLength(45);
+    expect(catalogue.pageImageUrls.at(-1)).toContain("/Pages/45/Zoom.jpg");
+  });
+});
+
+describe("Aldi wiring drift guards", () => {
+  it("registers the aldi adapter in adapters.ts", () => {
+    const registry = readFileSync(
+      new URL("../src/server/integrations/retailers/adapters.ts", import.meta.url),
+      "utf8",
+    );
+    expect(registry).toMatch(/import "\.\/aldi";/);
+  });
+
+  it("seeds the aldi retailer with its adapter", () => {
+    const seed = readFileSync(
+      new URL("../../../packages/db/src/seed/retailers.ts", import.meta.url),
+      "utf8",
+    );
+    expect(seed).toMatch(/slug: "aldi", name: "Aldi", kind: "chain", adapter: "aldi"/);
   });
 });

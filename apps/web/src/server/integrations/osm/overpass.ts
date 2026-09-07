@@ -43,6 +43,7 @@ const CHAIN_BRANDS: { slug: string; patterns: RegExp }[] = [
   { slug: "monoprix", patterns: /^monoprix$/i },
   { slug: "franprix", patterns: /^franprix$/i },
   { slug: "g20", patterns: /^g20$/i },
+  { slug: "aldi", patterns: /^aldi( marché| marche)?$/i },
 ];
 
 function classifyStore(tags: Record<string, string>): { slug: string | null; format: string | null } {

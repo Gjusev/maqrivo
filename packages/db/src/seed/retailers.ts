@@ -6,6 +6,7 @@ export const RETAILERS: {
   kind: "chain" | "independent";
   adapter?: string;
 }[] = [
+  { slug: "aldi", name: "Aldi", kind: "chain", adapter: "aldi" },
   { slug: "carrefour", name: "Carrefour", kind: "chain", adapter: "carrefour" },
   { slug: "auchan", name: "Auchan", kind: "chain", adapter: "auchan" },
   { slug: "intermarche", name: "Intermarché", kind: "chain", adapter: "intermarche" },
