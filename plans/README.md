@@ -21,7 +21,7 @@ STOP conditions, and update your row when done.
 | 009  | Offers "my stores" filter + list pagination | P3 | M | — | DONE |
 | 010  | Security hardening: IDOR, unauth actions, owner checks | P2 | M | — | DONE |
 | 011  | Perf & data quality: SQL aggregates, junk filter, timezone | P3 | M | — | DONE |
-| 012  | Close the pantry loop (restock on purchase, deduct on consumption) | P3 | M | — | TODO |
+| 012  | Close the pantry loop (restock on purchase, deduct on consumption) | P3 | M | — | DONE |
 | 013  | Plan staleness detection + opt-in auto-refresh | P3 | M | 012 (soft) | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (one-line reason) | REJECTED (one-line rationale).
