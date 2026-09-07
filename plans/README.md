@@ -15,11 +15,11 @@ STOP conditions, and update your row when done.
 | 003  | Catalogue review flow: hydrate candidates, dedup, visible errors | P1 | S | 001 (soft) | DONE |
 | 004  | Quick trust fixes: titles, favorite bug, receipt store, pantry row | P1 | S | — | DONE |
 | 005  | Automated vision extraction job (pg-boss sweep) | P2 | M | 001, 003 | DONE |
-| 006  | Auto-confirm gate + daily digest + weekly discovery + Carrefour honesty | P2 | M | 005 | TODO |
+| 006  | Auto-confirm gate + daily digest + weekly discovery + Carrefour honesty | P2 | M | 005 | DONE |
 | 007  | Error/loading/not-found boundaries | P2 | M | — | DONE |
 | 008  | Onboarding checklist + in-app leaflet lightbox | P2 | M | — | DONE |
 | 009  | Offers "my stores" filter + list pagination | P3 | M | — | DONE |
-| 010  | Security hardening: IDOR, unauth actions, owner checks | P2 | M | — | TODO |
+| 010  | Security hardening: IDOR, unauth actions, owner checks | P2 | M | — | DONE |
 | 011  | Perf & data quality: SQL aggregates, junk filter, timezone | P3 | M | — | DONE |
 | 012  | Close the pantry loop (restock on purchase, deduct on consumption) | P3 | M | — | TODO |
 | 013  | Plan staleness detection + opt-in auto-refresh | P3 | M | 012 (soft) | TODO |
