@@ -33,6 +33,9 @@ describe("politeFetchImage", () => {
     // Identifying User-Agent is part of the politeness contract.
     const headers = fetchMock.mock.calls[0]![1]!.headers as Record<string, string>;
     expect(headers["User-Agent"]).toMatch(/^Maqrivo\//);
+    // JPEG-first negotiation: vision model rejects webp data-URLs, so the
+    // fetch must ask the CDN for jpeg before anything else.
+    expect(headers["accept"]?.startsWith("image/jpeg")).toBe(true);
   });
 
   it("rejects non-image content types before anything is stored", async () => {

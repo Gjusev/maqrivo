@@ -275,7 +275,14 @@ export async function politeFetchImage(
     try {
       const res = await guardedFetch(url, source, {
         signal: controller.signal,
-        headers: { "User-Agent": APP_USER_AGENT, accept: "image/*", ...headers },
+        // JPEG-first content negotiation: CDNs that serve AVIF/WebP on a
+        // permissive Accept would hand the vision pipeline a format the
+        // image model rejects (observed: iPaper CDN -> webp -> Z.AI 400).
+        headers: {
+          "User-Agent": APP_USER_AGENT,
+          accept: "image/jpeg,image/png;q=0.9,image/*;q=0.5",
+          ...headers,
+        },
       });
       clearTimeout(timer);
       if (res.status === 429 || res.status >= 500) {

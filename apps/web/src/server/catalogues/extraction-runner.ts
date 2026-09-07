@@ -3,6 +3,7 @@
  * nightly pg-boss sweep. Session-free by design: `userId` is nullable so
  * system runs still leave provenance rows without inventing a user.
  */
+import sharp from "sharp";
 import { and, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../db";
@@ -23,6 +24,16 @@ const SYSTEM_PROMPT =
   "validUntil is the printed offer end date when the page shows a validity range (\"du 10/09 au 18/09\" → \"18/09\"). " +
   "Do NOT invent prices, sizes or dates for items that do not print them. Answer with JSON only: " +
   '{"items":[{"description","brand","promoPrice","regularPrice","pricePerKg","mechanicPhrase","loyalty","position","packSize","validUntil"}]}';
+
+/**
+ * Tolerant schema: the model occasionally answers with {"offers":[…]} or a
+ * bare array — every shape normalizes to {items}. candidatesFromExtraction
+ * still re-validates each item deterministically, so tolerance here never
+ * admits fabricated data.
+ */
+const visionSchema = z
+  .union([z.object({ items: z.array(z.unknown()) }), z.object({ offers: z.array(z.unknown()) }), z.array(z.unknown())])
+  .transform((v) => ({ items: "items" in v ? v.items : "offers" in v ? v.offers : v }));
 
 export interface ExtractPageResult {
   ok: boolean;
@@ -66,16 +77,46 @@ export async function runPageExtraction(input: {
       ? "image/webp"
       : "image/jpeg";
 
-  let raw;
-  try {
-    raw = await provider.analyzeImage({
-      system: SYSTEM_PROMPT,
-      prompt: "Extract the offers from this leaflet page.",
-      imageDataUrl: `data:${mime};base64,${buffer.toString("base64")}`,
-      schema: z.object({ items: z.array(z.unknown()) }),
-    });
-  } catch (err) {
-    const error = err instanceof Error ? err.message.slice(0, 200) : "ai-failed";
+  // Retailer CDNs legitimately serve pages as WebP/AVIF, but the vision
+  // model rejects those data-URLs (observed: Z.AI 400 图片解析错误). Convert
+  // anything that is not jpeg/png to a high-quality JPEG before sending.
+  let payload = buffer;
+  let payloadMime = mime;
+  if (mime !== "image/jpeg" && mime !== "image/png") {
+    try {
+      payload = await sharp(buffer).rotate().jpeg({ quality: 88 }).toBuffer();
+      payloadMime = "image/jpeg";
+    } catch {
+      return { ok: false, error: "image-convert-failed" };
+    }
+  }
+
+  // Some pages defeat the vision parser as JPEG but parse fine as PNG —
+  // two formats max, so a stubborn page costs at most two paid calls. Only
+  // format-shaped rejections (400 family) justify re-encoding; auth/network
+  // errors are returned as-is.
+  const attempts: { mime: string; data: Buffer }[] = [{ mime: payloadMime, data: payload }];
+  if (payloadMime === "image/jpeg") {
+    attempts.push({ mime: "image/png", data: await sharp(payload).png().toBuffer() });
+  }
+
+  let raw: z.infer<typeof visionSchema> | undefined;
+  let lastError = "ai-failed";
+  for (const attempt of attempts) {
+    try {
+      raw = await provider.analyzeImage({
+        system: SYSTEM_PROMPT,
+        prompt: "Extract the offers from this leaflet page.",
+        imageDataUrl: `data:${attempt.mime};base64,${attempt.data.toString("base64")}`,
+        schema: visionSchema,
+      });
+      break;
+    } catch (err) {
+      lastError = err instanceof Error ? err.message.slice(0, 200) : "ai-failed";
+      if (!/400|图片|format|parse/i.test(lastError)) break; // non-format failure: no ladder
+    }
+  }
+  if (!raw) {
     // Record the failed attempt (retry cadence) but leave processedAt NULL
     // so the page stays eligible — the sweep retries after the cooldown.
     await db.insert(aiExtraction).values({
@@ -83,10 +124,10 @@ export async function runPageExtraction(input: {
       userId: input.userId,
       model: process.env.ZAI_VISION_MODEL ?? "glm-5.3-flash",
       promptVersion: "catalogue-v2",
-      output: { pageId: input.pageId, items: [], error },
+      output: { pageId: input.pageId, items: [], error: lastError },
       validationStatus: "rejected",
     });
-    return { ok: false, error };
+    return { ok: false, error: lastError };
   }
 
   const candidates = candidatesFromExtraction(raw);
