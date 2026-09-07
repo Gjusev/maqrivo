@@ -8,7 +8,8 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "../db";
 import { ingestionRun, mealPlan, mealSlot, pantryItem, recipe, recipeIngredient } from "@maqrivo/db";
-import { round3, slotConceptQuantities, toBaseUnits } from "./quantities";
+import { round3, slotConceptQuantities } from "./quantities";
+import { toBaseUnits } from "@maqrivo/core";
 
 // ── Restock ─────────────────────────────────────────────────────────────────
 
@@ -54,13 +55,19 @@ export async function restockFromPurchase(input: {
 
   if (existing) {
     // Convert through base units so a g purchase lands on a kg row correctly.
-    const delta = toBaseUnits(input.quantity, input.unit) / toBaseUnits(1, existing.unit);
-    const next = Math.max(0, Number(existing.quantity) + delta);
-    await db
-      .update(pantryItem)
-      .set({ quantity: String(round3(next)), updatedAt: new Date() })
-      .where(eq(pantryItem.id, existing.id));
-    return;
+    const fromBase = toBaseUnits(input.quantity, input.unit);
+    const toBase = toBaseUnits(1, existing.unit);
+    if (fromBase !== null && toBase !== null) {
+      const delta = fromBase / toBase;
+      const next = Math.max(0, Number(existing.quantity) + delta);
+      await db
+        .update(pantryItem)
+        .set({ quantity: String(round3(next)), updatedAt: new Date() })
+        .where(eq(pantryItem.id, existing.id));
+      return;
+    }
+    // Unconvertible unit on either side: store the purchase as its own row in
+    // its own unit instead of misreading it in the existing row's unit.
   }
 
   await db.insert(pantryItem).values({
@@ -161,6 +168,7 @@ export async function runPantryConsumptionSweep(): Promise<{ slots: number; dedu
           for (const row of rows) {
             if (remaining <= 0) break;
             const factor = toBaseUnits(1, row.unit);
+            if (factor === null) continue; // unknown unit: no honest base-space reading, leave the row untouched
             const haveBase = Number(row.quantity) * factor;
             const take = Math.min(haveBase, remaining);
             const nextRowUnit = round3(Math.max(0, haveBase - take) / factor);

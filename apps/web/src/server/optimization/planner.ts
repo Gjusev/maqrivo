@@ -28,14 +28,16 @@ import {
 } from "@maqrivo/db";
 import { getSessionContext, loadUserContext } from "../session";
 import {
+  baseUnitOf,
+  dimensionOf,
   freshnessOf,
   netRequirements,
   orderStoresByProximity,
+  toBaseUnits,
   totalNutrition,
   type IngredientNutrition,
   type NutritionPer100,
 } from "@maqrivo/core";
-import { toBaseUnits } from "../pantry/quantities";
 import type { BasketProblem, BasketSolution, MealPlanProblem } from "@maqrivo/solver-contract";
 import { optimizeBasket, planMeals } from "../solver/client";
 
@@ -238,6 +240,12 @@ export async function optimizeShoppingForUser(
   // Requirements: recipe ingredients across the week, minus consumable pantry.
   const slots = await db.select().from(mealSlot).where(eq(mealSlot.mealPlanId, plan.id));
   const needPerConcept = new Map<string, number>();
+  // Per-concept base dimension for netting: mass concepts net in g, volume
+  // concepts in ml, count concepts in units — whatever the recipe
+  // ingredients carry (a concept demanded in l nets against ml candidates).
+  // null marks mixed-dimension bad data: such concepts get no candidates and
+  // surface as uncovered instead of netting across dimensions.
+  const dimensionByConcept = new Map<string, "mass" | "volume" | "count" | null>();
   for (const slot of slots) {
     if (!slot.recipeId) continue;
     const ings = await db
@@ -247,8 +255,13 @@ export async function optimizeShoppingForUser(
     const recipeRow = (await db.select().from(recipe).where(eq(recipe.id, slot.recipeId)).limit(1))[0];
     const scale = recipeRow ? slot.servings / recipeRow.servings : 1;
     for (const ing of ings) {
-      const base = toBaseUnits(Number(ing.quantity), ing.unit as "g");
+      const base = toBaseUnits(Number(ing.quantity), ing.unit);
+      const baseUnit = baseUnitOf(ing.unit);
+      if (base === null || baseUnit === null) continue; // unknown unit: excluded from netting, never misread
       needPerConcept.set(ing.foodConceptId, (needPerConcept.get(ing.foodConceptId) ?? 0) + base * scale);
+      const dim = dimensionOf(baseUnit);
+      const known = dimensionByConcept.get(ing.foodConceptId);
+      dimensionByConcept.set(ing.foodConceptId, known === undefined || known === dim ? dim : null);
     }
   }
   const pantry = await db
@@ -258,12 +271,25 @@ export async function optimizeShoppingForUser(
     .where(eq(pantryItem.userId, userId));
   const pantryStock = pantry
     .filter((p) => p.item.status === "active" && p.item.foodConceptId !== null)
-    .map((p) => ({
-      conceptId: p.item.foodConceptId!,
-      quantityBase: toBaseUnits(Number(p.item.quantity), p.item.unit as "g"),
-      expiresOn: p.item.expiresOn,
-      shelfLifeClass: (p.concept?.shelfLifeClass ?? "semi") as "storable" | "semi" | "fresh",
-    }));
+    .flatMap((p) => {
+      const quantityBase = toBaseUnits(Number(p.item.quantity), p.item.unit);
+      const stockUnit = baseUnitOf(p.item.unit);
+      // Stock in an unknown unit, or in a foreign dimension for a required
+      // concept (ml stock against a g requirement), can't net coherently —
+      // ignored rather than misread.
+      const reqDim = dimensionByConcept.get(p.item.foodConceptId!);
+      if (quantityBase === null || stockUnit === null || (reqDim !== undefined && dimensionOf(stockUnit) !== reqDim)) {
+        return [];
+      }
+      return [
+        {
+          conceptId: p.item.foodConceptId!,
+          quantityBase,
+          expiresOn: p.item.expiresOn,
+          shelfLifeClass: (p.concept?.shelfLifeClass ?? "semi") as "storable" | "semi" | "fresh",
+        },
+      ];
+    });
   const conceptShelf = new Map(pantry.map((p) => [p.item.foodConceptId, (p.concept?.shelfLifeClass ?? "semi") as "storable" | "semi" | "fresh"]));
   const net = netRequirements(
     [...needPerConcept.entries()].map(([conceptId, quantityBase]) => ({
@@ -420,22 +446,36 @@ export async function optimizeShoppingForUser(
             favorite: storeRow.prefs.favorite,
             proteinPer100: nutrition?.proteinG != null ? Number(nutrition.proteinG) : undefined,
           });
-        } else if (p.packageQuantity != null && p.packageUnit === "g") {
-          candidates.push({
-            id: `${p.id}:${storeRow.store.id}`,
-            productId: p.id,
-            storeId: storeRow.store.id,
-            conceptId,
-            purchasingMode: "PACKAGED",
-            packContentBase: Number(p.packageQuantity),
-            unitPriceCents: obs.priceBasis === "unit" ? obs.amountCents : Math.round((obs.amountCents * Number(p.packageQuantity)) / 1000),
-            maxCount: 8,
-            promotions,
-            shelfLifeClass: shelfByConcept.get(conceptId) ?? "semi",
-            stale: fresh.state === "stale",
-            favorite: storeRow.prefs.favorite,
-            proteinPer100: nutrition?.proteinG != null ? Number(nutrition.proteinG) : undefined,
-          });
+        } else if (p.packageQuantity != null) {
+          // Any product with a resolvable base-unit package quantity is a
+          // candidate: a 1 kg rice pack is 1000 g, a 1 l oil bottle is
+          // 1000 ml, a 6-unit box is 6. A pack only competes for a concept in
+          // the same base dimension as that concept's requirement; packs in
+          // unknown units are skipped, never misinterpreted.
+          const packContent = toBaseUnits(Number(p.packageQuantity), p.packageUnit ?? "");
+          const packUnit = baseUnitOf(p.packageUnit ?? "");
+          const packContentBase = packContent !== null ? Math.round(packContent) : null;
+          const unitPriceCents =
+            packContentBase !== null && packUnit !== null && dimensionOf(packUnit) === dimensionByConcept.get(conceptId)
+              ? packPriceCents(obs, packContentBase, packUnit)
+              : null;
+          if (packContentBase !== null && unitPriceCents !== null) {
+            candidates.push({
+              id: `${p.id}:${storeRow.store.id}`,
+              productId: p.id,
+              storeId: storeRow.store.id,
+              conceptId,
+              purchasingMode: "PACKAGED",
+              packContentBase,
+              unitPriceCents,
+              maxCount: 8,
+              promotions,
+              shelfLifeClass: shelfByConcept.get(conceptId) ?? "semi",
+              stale: fresh.state === "stale",
+              favorite: storeRow.prefs.favorite,
+              proteinPer100: nutrition?.proteinG != null ? Number(nutrition.proteinG) : undefined,
+            });
+          }
         }
       }
     }
@@ -560,12 +600,17 @@ export async function optimizeShoppingForUser(
   let sortOrder = 0;
   for (const item of solution.items) {
     const obs = priceByProductStore.get(`${item.productId}:${item.storeId}`);
+    // Required-quantity label in the concept's display unit; contentBase
+    // stays in the concept's base dimension (g → kg, ml → l, count → unit).
+    const dim = dimensionByConcept.get(item.conceptId);
+    const requiredUnit = dim === "volume" ? "l" : dim === "count" ? "unit" : "kg";
+    const requiredQuantity = requiredUnit === "unit" ? String(item.contentBase) : String(Math.round(item.contentBase / 1000));
     await db.insert(shoppingItem).values({
       shoppingPlanId: created.id,
       storeId: item.storeId,
       productId: item.productId,
-      requiredQuantity: String(Math.round(item.contentBase / 1000)),
-      requiredUnit: "kg",
+      requiredQuantity,
+      requiredUnit,
       purchaseQuantity: String(item.count),
       packageCount: item.count,
       priceBasis: obs?.priceBasis ?? "unit",
@@ -602,4 +647,30 @@ function conceptNutrition(concept: typeof foodConcept.$inferSelect): NutritionPe
     sugarsG: concept.sugarsG != null ? Number(concept.sugarsG) : null,
     saltG: concept.saltG != null ? Number(concept.saltG) : null,
   };
+}
+
+/**
+ * Shelf price of one pack in cents from a price observation, or null when the
+ * basis can't price this pack (e.g. a per-litre price on a gram pack — never
+ * priced across dimensions).
+ */
+function packPriceCents(
+  obs: Pick<typeof priceObservation.$inferSelect, "amountCents" | "priceBasis">,
+  packContentBase: number,
+  packUnit: "g" | "ml" | "unit",
+): number | null {
+  switch (obs.priceBasis) {
+    case "unit":
+      return obs.amountCents;
+    case "per_kg":
+      return packUnit === "g" ? Math.round((obs.amountCents * packContentBase) / 1000) : null;
+    case "per_100g":
+      return packUnit === "g" ? Math.round((obs.amountCents * packContentBase) / 100) : null;
+    case "per_l":
+      return packUnit === "ml" ? Math.round((obs.amountCents * packContentBase) / 1000) : null;
+    case "per_100ml":
+      return packUnit === "ml" ? Math.round((obs.amountCents * packContentBase) / 100) : null;
+    default:
+      return null;
+  }
 }

@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  baseUnitOf,
   conversionFactor,
   convert,
   dimensionOf,
   isCompatible,
   quantity,
   toBase,
+  toBaseUnits,
 } from "../src/units/types";
 import { formatQuantity } from "../src/units/format";
 
@@ -83,5 +85,44 @@ describe("locale-aware quantity formatting", () => {
   it("formats counts without decimals", () => {
     expect(formatQuantity(quantity(3, "unit"), "fr")).toBe("3 unit");
     expect(formatQuantity(quantity(2, "pack"), "en")).toBe("2 pack");
+  });
+});
+
+describe("db free-text unit resolution", () => {
+  it("converts kg and l to base units exactly (×1000)", () => {
+    expect(toBaseUnits(1, "kg")).toBe(1000);
+    expect(toBaseUnits(1.5, "kg")).toBe(1500);
+    expect(toBaseUnits(0.25, "kg")).toBe(250);
+    expect(toBaseUnits(2, "l")).toBe(2000);
+    expect(toBaseUnits(0.5, "l")).toBe(500);
+  });
+
+  it("passes g, ml, unit and pack through unchanged", () => {
+    expect(toBaseUnits(500, "g")).toBe(500);
+    expect(toBaseUnits(330, "ml")).toBe(330);
+    expect(toBaseUnits(6, "unit")).toBe(6);
+    expect(toBaseUnits(2, "pack")).toBe(2);
+  });
+
+  it("resolves the base unit of a free-text unit", () => {
+    expect(baseUnitOf("g")).toBe("g");
+    expect(baseUnitOf("kg")).toBe("g");
+    expect(baseUnitOf("ml")).toBe("ml");
+    expect(baseUnitOf("l")).toBe("ml");
+    expect(baseUnitOf("unit")).toBe("unit");
+    expect(baseUnitOf("pack")).toBe("unit");
+  });
+
+  it("rejects unknown units as null instead of misinterpreting them", () => {
+    expect(baseUnitOf("tbsp")).toBeNull();
+    expect(baseUnitOf("KG")).toBeNull();
+    expect(baseUnitOf("")).toBeNull();
+    expect(toBaseUnits(2, "tbsp")).toBeNull();
+    expect(toBaseUnits(1, "")).toBeNull();
+  });
+
+  it("rejects non-finite amounts as null", () => {
+    expect(toBaseUnits(Number.NaN, "g")).toBeNull();
+    expect(toBaseUnits(Number.POSITIVE_INFINITY, "kg")).toBeNull();
   });
 });
