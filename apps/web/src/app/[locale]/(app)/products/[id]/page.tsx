@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db } from "@/server/db";
 import { foodConcept, product, productNutrition } from "@maqrivo/db";
-import { getSessionContext } from "@/server/session";
+import { getSessionContext, isAdmin } from "@/server/session";
 import { priceHistoryForProduct } from "@/server/prices/history";
 import { computeValueMetrics, formatMoney, freshnessOf } from "@maqrivo/core";
 import { PriceHistorySection } from "./price-history";
@@ -31,6 +31,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   if (!rows) notFound();
 
   const session = await getSessionContext();
+  const admin = await isAdmin();
   if (!session) notFound();
 
   const p = rows.product;
@@ -88,7 +89,9 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           <h2 className="text-sm font-semibold text-zinc-900">{th(p.halalState)}</h2>
         </section>
 
-        <ConceptLinker productId={p.id} currentConceptId={p.foodConceptId} currentConceptName={conceptName} />
+        {admin ? (
+          <ConceptLinker productId={p.id} currentConceptId={p.foodConceptId} currentConceptName={conceptName} />
+        ) : null}
 
         {n ? (
           <section className="card p-4">
