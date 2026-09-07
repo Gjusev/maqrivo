@@ -184,7 +184,7 @@ export default async function TodayPage() {
 
         {shopping ? (
           <Link href="/shopping" className="card flex items-center justify-between p-4 transition-colors hover:border-zinc-300">
-            <span className="text-sm font-medium text-zinc-700">{t("createPlan")} →</span>
+            <span className="text-sm font-medium text-zinc-700">{t("shoppingCard")} →</span>
             <span className="font-bold text-zinc-900">
               {formatMoney({ amountCents: shopping.totalCents ?? 0, currency: "EUR" }, locale)}
             </span>

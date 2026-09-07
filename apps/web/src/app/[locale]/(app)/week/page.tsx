@@ -112,7 +112,7 @@ export default async function WeekPage() {
 
       <p className="mt-4 text-center text-xs text-zinc-400">
         <Link href="/shopping" className="text-brand-700 hover:underline">
-          {t("title")} → shopping
+          {t("goToShopping")} →
         </Link>
       </p>
     </>

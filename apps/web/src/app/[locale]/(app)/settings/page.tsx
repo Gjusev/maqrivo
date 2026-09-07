@@ -13,7 +13,7 @@ export default async function SettingsPage() {
 
   return (
     <>
-      <PageHeader title={tc("language")} />
+      <PageHeader title={t("title")} />
       <div className="space-y-4">
         <section className="card p-5">
           <h2 className="text-sm font-semibold text-zinc-900">{tc("language")}</h2>

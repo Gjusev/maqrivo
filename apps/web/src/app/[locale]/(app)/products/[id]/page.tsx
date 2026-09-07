@@ -7,6 +7,7 @@ import { getSessionContext } from "@/server/session";
 import { priceHistoryForProduct } from "@/server/prices/history";
 import { computeValueMetrics, formatMoney, freshnessOf } from "@maqrivo/core";
 import { PriceHistorySection } from "./price-history";
+import { Link } from "@/i18n/navigation";
 import { AddPriceForm } from "./add-price-form";
 import { ConceptLinker } from "./concept-linker";
 
@@ -16,6 +17,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const t = await getTranslations("Products");
   const tf = await getTranslations("Freshness");
   const th = await getTranslations("HalalState");
+  const tc = await getTranslations("Common");
 
   const rows = (
     await db
@@ -65,6 +67,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
   return (
     <>
+      <Link href="/products" className="text-xs text-zinc-500 hover:text-brand-700">← {tc("back")}</Link>
       <div className="mb-4">
         <h1 className="text-2xl font-bold tracking-tight text-zinc-900">{p.name}</h1>
         <p className="mt-0.5 text-sm text-zinc-500">

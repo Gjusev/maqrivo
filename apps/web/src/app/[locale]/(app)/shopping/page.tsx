@@ -44,7 +44,7 @@ export default async function ShoppingPage() {
           title={t("noShoppingPlan")}
           action={
             <Link href="/week" className="btn-primary">
-              {t("title")} → week
+              {t("goToWeek")} →
             </Link>
           }
         />

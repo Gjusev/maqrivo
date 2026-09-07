@@ -5,11 +5,13 @@ import { db } from "@/server/db";
 import { foodConcept, recipe, recipeIngredient } from "@maqrivo/db";
 import { getSessionContext } from "@/server/session";
 import { PageHeader } from "@/components/page-header";
+import { Link } from "@/i18n/navigation";
 import { RecipeEditor } from "../../recipe-editor";
 
 export default async function EditRecipePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const t = await getTranslations("Recipes");
+  const tc = await getTranslations("Common");
   const session = await getSessionContext();
   if (!session) notFound();
 
@@ -24,7 +26,8 @@ export default async function EditRecipePage({ params }: { params: Promise<{ id:
 
   return (
     <>
-      <PageHeader title={t("create")} />
+      <PageHeader title={t("editTitle")} />
+      <Link href="/recipes" className="text-xs text-zinc-500 hover:text-brand-700">← {tc("back")}</Link>
       <RecipeEditor
         initial={{
           id: existing.id,

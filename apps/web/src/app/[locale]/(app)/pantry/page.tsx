@@ -54,7 +54,6 @@ export default async function PantryPage() {
                     quantityLabel={formatQuantity({ amount: Number(item.quantity), unit: item.unit as "g" }, locale)}
                     expiresOn={item.expiresOn}
                     expiring={expiring}
-                    status={item.status}
                   />
                 );
               })}

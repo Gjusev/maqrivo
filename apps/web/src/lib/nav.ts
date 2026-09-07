@@ -2,9 +2,9 @@ import { CalendarBlankIcon } from "@phosphor-icons/react/dist/csr/CalendarBlank"
 import { HouseIcon } from "@phosphor-icons/react/dist/csr/House";
 import { BasketIcon } from "@phosphor-icons/react/dist/csr/Basket";
 import { PercentIcon } from "@phosphor-icons/react/dist/csr/Percent";
-import { ForkKnifeIcon } from "@phosphor-icons/react/dist/csr/ForkKnife";
 import { CookingPotIcon } from "@phosphor-icons/react/dist/csr/CookingPot";
 import { ArchiveIcon } from "@phosphor-icons/react/dist/csr/Archive";
+import { SparkleIcon } from "@phosphor-icons/react/dist/csr/Sparkle";
 import { MapPinIcon } from "@phosphor-icons/react/dist/csr/MapPin";
 import { PackageIcon } from "@phosphor-icons/react/dist/csr/Package";
 import { UserCircleIcon } from "@phosphor-icons/react/dist/csr/UserCircle";
@@ -24,10 +24,10 @@ export const NAV_ITEMS: NavItem[] = [
   { key: "shopping", href: "/shopping", icon: BasketIcon, primary: true },
   { key: "offers", href: "/offers", icon: PercentIcon, primary: true },
   { key: "pantry", href: "/pantry", icon: ArchiveIcon },
-  { key: "meals", href: "/meals", icon: ForkKnifeIcon },
   { key: "recipes", href: "/recipes", icon: CookingPotIcon },
   { key: "stores", href: "/stores", icon: MapPinIcon },
   { key: "products", href: "/products", icon: PackageIcon },
+  { key: "assistant", href: "/assistant", icon: SparkleIcon },
   { key: "profile", href: "/profile", icon: UserCircleIcon },
   { key: "settings", href: "/settings", icon: GearIcon },
 ];
