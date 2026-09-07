@@ -17,10 +17,9 @@ import {
   userStorePrefs,
 } from "@maqrivo/db";
 import { getSessionContext } from "../session";
-import { getAIProvider } from "../ai/provider";
-import { readImage } from "../storage";
 import { tryMatchPromotionProduct } from "../ingestion/promotions";
-import { candidatesFromExtraction, type CatalogueCandidate } from "./extraction";
+import { runPageExtraction, type ExtractPageResult } from "./extraction-runner";
+import type { CatalogueCandidate } from "./extraction";
 
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -55,66 +54,10 @@ export async function createCatalogueAction(input: {
 }
 
 /** Vision extraction over one page photo → reviewed candidates (never auto-truth). */
-export async function extractPageAction(pageId: string): Promise<{
-  ok: boolean;
-  error?: string;
-  candidates?: CatalogueCandidate[];
-}> {
+export async function extractPageAction(pageId: string): Promise<ExtractPageResult> {
   const session = await getSessionContext();
   if (!session) return { ok: false, error: "unauthorized" };
-
-  const provider = getAIProvider();
-  if (!provider.configured) return { ok: false, error: "ai-not-configured" };
-
-  const pageRow = (
-    await db
-      .select({ page: cataloguePage, cat: catalogue })
-      .from(cataloguePage)
-      .innerJoin(catalogue, eq(cataloguePage.catalogueId, catalogue.id))
-      .where(eq(cataloguePage.id, pageId))
-      .limit(1)
-  )[0];
-  if (!pageRow?.page.imageKey) return { ok: false, error: "page-not-found" };
-
-  let buffer: Buffer;
-  try {
-    buffer = await readImage(pageRow.page.imageKey);
-  } catch {
-    return { ok: false, error: "image-unreadable" };
-  }
-  const mime = pageRow.page.imageKey.endsWith(".png") ? "image/png" : pageRow.page.imageKey.endsWith(".webp") ? "image/webp" : "image/jpeg";
-
-  let raw;
-  try {
-    raw = await provider.analyzeImage({
-      system:
-        "You read supermarket leaflet pages for a grocery app. Extract every priced offer you can SEE. " +
-        "promoPrice/regularPrice are euro amounts printed on the page (numbers only, e.g. 4.99). " +
-        "mechanicPhrase is the verbatim French deal phrase if printed (\"le lot de 2\", \"2e à -50%\", \"-30%\", \"prix carte\"). " +
-        "packSize is the printed pack format when visible (\"500 g\", \"6x330 ml\", \"1L\"). " +
-        "validUntil is the printed offer end date when the page shows a validity range (\"du 10/09 au 18/09\" → \"18/09\"). " +
-        "Do NOT invent prices, sizes or dates for items that do not print them. Answer with JSON only: " +
-        '{"items":[{"description","brand","promoPrice","regularPrice","pricePerKg","mechanicPhrase","loyalty","position","packSize","validUntil"}]}',
-      prompt: "Extract the offers from this leaflet page.",
-      imageDataUrl: `data:${mime};base64,${buffer.toString("base64")}`,
-      schema: z.object({ items: z.array(z.unknown()) }),
-    });
-  } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message.slice(0, 200) : "ai-failed" };
-  }
-
-  const candidates = candidatesFromExtraction(raw);
-  await db.insert(aiExtraction).values({
-    kind: "catalogue_page",
-    userId: session.userId,
-    // Evidence is linked to the page photo via its storageKey (set at upload).
-    model: process.env.ZAI_VISION_MODEL ?? "glm-5.3-flash",
-    promptVersion: "catalogue-v2",
-    output: { pageId, items: candidates },
-    validationStatus: candidates.length > 0 ? "valid" : "rejected",
-  });
-  await db.update(cataloguePage).set({ processedAt: new Date() }).where(eq(cataloguePage.id, pageId));
-  return { ok: true, candidates };
+  return runPageExtraction({ pageId, userId: session.userId });
 }
 
 /**
@@ -137,7 +80,10 @@ export async function getPageCandidates(pageId: string): Promise<CatalogueCandid
     .limit(1);
   const row = rows[0];
   if (!row) return null;
-  const out = row.output as { items?: CatalogueCandidate[] } | null;
+  const out = row.output as { items?: CatalogueCandidate[]; error?: string } | null;
+  // Failed attempts persist a row for the sweep's retry cadence but carry no
+  // candidates — treat them like "never extracted" here.
+  if (out?.error) return null;
   return out?.items ?? [];
 }
 
@@ -195,6 +141,8 @@ export async function confirmCandidateAction(input: unknown): Promise<{ ok: bool
   )[0];
   if (duplicate) return { ok: true, promotionId: duplicate.id, duplicate: true };
 
+  // Evidence: the page photo itself, resolved via its storageKey
+  // (set at upload or sync).
   const evidence = catRow.page?.imageKey
     ? (await db.select().from(sourceEvidence).where(eq(sourceEvidence.storageKey, catRow.page.imageKey)).limit(1))[0]
     : undefined;

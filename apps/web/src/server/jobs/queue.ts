@@ -6,11 +6,12 @@
 import { runOpenPricesSync } from "../ingestion/openprices-sync";
 import { runPromotionExpiry } from "../ingestion/promotions";
 import { runCatalogueSync } from "../ingestion/catalogue-sync";
+import { runExtractionSweep } from "../catalogues/extraction-runner";
 // Flipbook adapters register themselves on import — a source must be
 // registered for the catalogue-sync job to touch that retailer.
 import "../integrations/retailers/adapters";
 
-const JOBS = ["promotion-expiry", "openprices-sync", "catalogue-sync"] as const;
+const JOBS = ["promotion-expiry", "openprices-sync", "catalogue-sync", "page-extraction"] as const;
 type JobName = (typeof JOBS)[number];
 
 let bossInstance: import("pg-boss").PgBoss | null = null;
@@ -40,6 +41,7 @@ export async function startWorker(connectionString: string): Promise<void> {
   await boss.schedule("promotion-expiry", "17 5 * * *");
   await boss.schedule("openprices-sync", "43 5 * * *");
   await boss.schedule("catalogue-sync", "09 6 * * *");
+  await boss.schedule("page-extraction", "41 6 * * *"); // after catalogue-sync (09 6), off-minute
 
   bossInstance = boss;
   console.log("[pg-boss] worker started");
@@ -57,6 +59,11 @@ async function runJob(name: JobName): Promise<void> {
   } else if (name === "catalogue-sync") {
     const r = await runCatalogueSync();
     console.log(`[job] catalogue-sync: ${String(r.stores)} stores / ${String(r.newPages)} new pages`);
+  } else if (name === "page-extraction") {
+    const r = await runExtractionSweep();
+    console.log(
+      `[job] page-extraction: ${String(r.extracted)} extracted / ${String(r.skipped)} skipped / ${String(r.failed)} failed`,
+    );
   }
 }
 

@@ -25,6 +25,7 @@ export default async function AdminIngestionPage() {
           <TriggerButton jobKey="promotion-expiry" />
           <TriggerButton jobKey="openprices-sync" />
           <TriggerButton jobKey="catalogue-sync" />
+          <TriggerButton jobKey="page-extraction" />
         </div>
       </div>
 
