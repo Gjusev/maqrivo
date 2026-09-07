@@ -2,17 +2,19 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 import { listActivePromotions } from "@/server/ingestion/promotions";
+import { listUnmatchedPromotions } from "@/server/offers/unmatched";
 import { type OffersScope } from "@/server/ingestion/offers-scope";
 import { promotionDealAssessments, type PromotionDeal } from "@/server/prices/history";
 import { db } from "@/server/db";
 import { getSessionContext } from "@/server/session";
 import { formatMoney, type PromotionMechanism } from "@maqrivo/core";
 import { PercentIcon } from "@phosphor-icons/react/dist/ssr/Percent";
-import { desc, eq, isNotNull, sql } from "drizzle-orm";
-import { catalogue, retailer } from "@maqrivo/db";
+import { desc, eq, isNotNull, isNull, or, sql } from "drizzle-orm";
+import { catalogue, product, retailer } from "@maqrivo/db";
 import { NewPromotionButton } from "./new-promotion-button";
 import { NewCatalogueButton } from "./catalogues/new-catalogue-button";
 import { FilterBar } from "./filter-bar";
+import { UnmatchedResolve } from "./unmatched-resolve";
 import { Link } from "@/i18n/navigation";
 
 export default async function OffersPage({
@@ -52,6 +54,21 @@ export default async function OffersPage({
       .from(catalogue)
       .where(isNotNull(catalogue.id))
   )[0]!.catalogueTotal;
+
+  // Review queue: UNRESOLVED matches never earn a deal badge — surface them
+  // for a manual product link. Product options respect the same visibility
+  // rule the resolve action enforces (global or own rows), first 100.
+  const unmatched = await listUnmatchedPromotions();
+  const productOptions = await db
+    .select({ id: product.id, name: product.name, brand: product.brand })
+    .from(product)
+    .where(
+      session
+        ? or(isNull(product.ownerUserId), eq(product.ownerUserId, session.userId))
+        : isNull(product.ownerUserId),
+    )
+    .orderBy(product.name)
+    .limit(100);
 
   return (
     <>
@@ -155,6 +172,40 @@ export default async function OffersPage({
       )}
       {promotions.length > 0 && total > promotions.length ? (
         <p className="mt-2 text-xs text-zinc-400">{t("showingOf", { shown: promotions.length, total })}</p>
+      ) : null}
+      {unmatched.total > 0 ? (
+        <details className="mt-4">
+          <summary className="cursor-pointer text-sm font-semibold text-zinc-500 hover:text-zinc-700">
+            {t("unmatchedTitle", { count: unmatched.total })}
+          </summary>
+          <ul className="mt-2 space-y-2">
+            {unmatched.promotions.map((u) => (
+              <li key={u.promotionId} className="card p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-medium text-zinc-900">{u.description}</p>
+                    <p className="mt-0.5 text-xs text-zinc-500">
+                      {[u.retailerName, u.storeName ?? t("allStores"), u.brand].filter(Boolean).join(" · ")}
+                    </p>
+                    <UnmatchedResolve promotionId={u.promotionId} products={productOptions} />
+                  </div>
+                  <div className="shrink-0 text-right">
+                    {u.promoPriceCents != null ? (
+                      <p className="text-lg font-bold tabular-nums text-brand-700">
+                        {formatMoney({ amountCents: u.promoPriceCents, currency: "EUR" }, locale)}
+                      </p>
+                    ) : null}
+                    {u.validUntil ? (
+                      <p className="mt-0.5 text-xs text-zinc-400">
+                        {t("validUntil", { date: new Date(u.validUntil).toLocaleDateString(locale) })}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </details>
       ) : null}
     </>
   );

@@ -215,7 +215,10 @@
     "scopeMine": "My stores",
     "scopeAll": "All",
     "viewAllCatalogues": "All catalogues ({count})",
-    "showingOf": "showing {shown} of {total}"
+    "showingOf": "showing {shown} of {total}",
+    "unmatchedTitle": "Deals without a linked product ({count})",
+    "unmatchedResolve": "Link product",
+    "unmatchedResolved": "Linked!"
   },
   "Pantry": {
     "title": "Pantry",
