@@ -1,19 +1,20 @@
 /**
  * pg-boss job queue (Postgres-backed, in-process). Started from
  * instrumentation.ts in the server runtime; never during build.
- * Schedules: expiry + Open Prices sync + catalogue pipeline daily, store
- * discovery weekly (Mondays) — off-minute per policy.
+ * Schedules: expiry + pantry consumption sweep + Open Prices sync + catalogue
+ * pipeline daily, store discovery weekly (Mondays) — off-minute per policy.
  */
 import { runOpenPricesSync } from "../ingestion/openprices-sync";
 import { runPromotionExpiry } from "../ingestion/promotions";
 import { runCatalogueSync } from "../ingestion/catalogue-sync";
 import { runExtractionSweep } from "../catalogues/extraction-runner";
 import { runStoreDiscoverySweep } from "../stores/discovery";
+import { runPantryConsumptionSweep } from "../pantry/loop";
 // Flipbook adapters register themselves on import — a source must be
 // registered for the catalogue-sync job to touch that retailer.
 import "../integrations/retailers/adapters";
 
-const JOBS = ["promotion-expiry", "openprices-sync", "catalogue-sync", "page-extraction", "store-discovery"] as const;
+const JOBS = ["promotion-expiry", "pantry-consumption", "openprices-sync", "catalogue-sync", "page-extraction", "store-discovery"] as const;
 type JobName = (typeof JOBS)[number];
 
 let bossInstance: import("pg-boss").PgBoss | null = null;
@@ -41,6 +42,7 @@ export async function startWorker(connectionString: string): Promise<void> {
 
   // Idempotent: schedules are keyed by name.
   await boss.schedule("promotion-expiry", "17 5 * * *");
+  await boss.schedule("pantry-consumption", "31 5 * * *"); // after expiry (17 5), before openprices (43 5)
   await boss.schedule("openprices-sync", "43 5 * * *");
   await boss.schedule("catalogue-sync", "09 6 * * *");
   await boss.schedule("page-extraction", "41 6 * * *"); // after catalogue-sync (09 6), off-minute
@@ -54,6 +56,9 @@ async function runJob(name: JobName): Promise<void> {
   if (name === "promotion-expiry") {
     const r = await runPromotionExpiry();
     console.log(`[job] promotion-expiry: ${String(r.expired)} expired`);
+  } else if (name === "pantry-consumption") {
+    const r = await runPantryConsumptionSweep();
+    console.log(`[job] pantry-consumption: ${String(r.slots)} slots / ${String(r.deducted)} deducted`);
   } else if (name === "openprices-sync") {
     const r = await runOpenPricesSync();
     console.log(

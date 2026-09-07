@@ -94,6 +94,7 @@ export const ingestionKindEnum = pgEnum("ingestion_kind", [
   "price_refresh",
   "promotion_expiry",
   "product_resolution",
+  "pantry_consumption",
 ]);
 export const runStatusEnum = pgEnum("run_status", ["running", "succeeded", "failed", "partial"]);
 export const evidenceKindEnum = pgEnum("evidence_kind", [

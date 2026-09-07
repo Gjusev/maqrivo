@@ -23,6 +23,7 @@ export default async function AdminIngestionPage() {
         <h1 className="text-2xl font-bold tracking-tight text-zinc-900">{t("title")}</h1>
         <div className="flex gap-2">
           <TriggerButton jobKey="promotion-expiry" />
+          <TriggerButton jobKey="pantry-consumption" />
           <TriggerButton jobKey="openprices-sync" />
           <TriggerButton jobKey="catalogue-sync" />
           <TriggerButton jobKey="page-extraction" />

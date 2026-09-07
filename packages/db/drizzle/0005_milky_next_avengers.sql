@@ -1,0 +1,1 @@
+ALTER TYPE "public"."ingestion_kind" ADD VALUE 'pantry_consumption';

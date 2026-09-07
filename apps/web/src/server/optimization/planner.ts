@@ -35,6 +35,7 @@ import {
   type IngredientNutrition,
   type NutritionPer100,
 } from "@maqrivo/core";
+import { toBaseUnits } from "../pantry/quantities";
 import type { BasketProblem, BasketSolution, MealPlanProblem } from "@maqrivo/solver-contract";
 import { optimizeBasket, planMeals } from "../solver/client";
 
@@ -601,20 +602,4 @@ function conceptNutrition(concept: typeof foodConcept.$inferSelect): NutritionPe
     sugarsG: concept.sugarsG != null ? Number(concept.sugarsG) : null,
     saltG: concept.saltG != null ? Number(concept.saltG) : null,
   };
-}
-
-function toBaseUnits(amount: number, unit: string): number {
-  switch (unit) {
-    case "kg":
-      return amount * 1000;
-    case "l":
-      return amount * 1000;
-    case "g":
-    case "ml":
-    case "unit":
-    case "pack":
-      return amount;
-    default:
-      return amount;
-  }
 }

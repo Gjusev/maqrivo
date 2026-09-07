@@ -254,11 +254,14 @@ export async function addReceiptLineToPantryAction(lineId: string): Promise<{ ok
       .limit(1)
   )[0];
 
+  // Weight lines carry their real quantity in kg; everything else counts as
+  // one purchased unit (previous behavior: always 1 "unit").
+  const kg = line.quantityKg != null ? Number(line.quantityKg) : 0;
   const result = await addPantryItemAction({
     productId: line.productId,
     foodConceptId: productRow?.concept?.id,
-    quantity: 1,
-    unit: "unit",
+    quantity: kg > 0 ? kg : 1,
+    unit: kg > 0 ? "kg" : "unit",
   });
   return result.ok ? { ok: true } : { ok: false, error: result.error };
 }
