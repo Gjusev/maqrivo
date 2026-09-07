@@ -1,5 +1,5 @@
 import { getLocale, getTranslations } from "next-intl/server";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 import { db } from "@/server/db";
@@ -9,13 +9,17 @@ import {
   mealSlot,
   nutritionProfile,
   pantryItem,
+  promotion,
   recipe,
   recipeIngredient,
   shoppingPlan,
+  userStorePrefs,
 } from "@maqrivo/db";
 import { getSessionContext } from "@/server/session";
 import { formatMoney, totalNutrition, type IngredientNutrition, type NutritionPer100 } from "@maqrivo/core";
 import { CalendarBlankIcon } from "@phosphor-icons/react/dist/ssr/CalendarBlank";
+import { CheckIcon } from "@phosphor-icons/react/dist/ssr/Check";
+import { CircleIcon } from "@phosphor-icons/react/dist/ssr/Circle";
 import { Link } from "@/i18n/navigation";
 import { GeneratePlanButton } from "./week/generate-plan-button";
 
@@ -50,18 +54,46 @@ export default async function TodayPage() {
       .limit(1)
   )[0];
 
+  // Onboarding checklist inputs: location rides on the session profile and
+  // the plan is loaded above; stores and offers are two cheap counts.
+  const hasLocation = session.homeLat != null && session.homeLng != null;
+  const enabledStoreCount = (
+    await db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(userStorePrefs)
+      .where(and(eq(userStorePrefs.userId, session.userId), eq(userStorePrefs.enabled, true)))
+  )[0]?.n ?? 0;
+  const offersSince = new Date();
+  offersSince.setDate(offersSince.getDate() - 14);
+  const recentPromotionCount = (
+    await db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(promotion)
+      .where(gte(promotion.createdAt, offersSince))
+  )[0]?.n ?? 0;
+  const setupDone = {
+    location: hasLocation,
+    stores: enabledStoreCount > 0,
+    offers: recentPromotionCount > 0,
+    plan: plan != null,
+  };
+  const setupComplete = Object.values(setupDone).every(Boolean);
+
   const todayIso = new Date().toISOString().slice(0, 10);
 
   if (!plan) {
     return (
       <>
         <PageHeader title={t("title")} />
-        <EmptyState
-          icon={CalendarBlankIcon}
-          title={t("noPlan")}
-          body={session.locationLabel ?? undefined}
-          action={<GeneratePlanButton variant="primary" />}
-        />
+        <div className="space-y-4">
+          {!setupComplete ? <SetupChecklist done={setupDone} /> : null}
+          <EmptyState
+            icon={CalendarBlankIcon}
+            title={t("noPlan")}
+            body={session.locationLabel ?? undefined}
+            action={<GeneratePlanButton variant="primary" />}
+          />
+        </div>
       </>
     );
   }
@@ -110,6 +142,7 @@ export default async function TodayPage() {
       <PageHeader title={t("title")} />
 
       <div className="space-y-4">
+        {!setupComplete ? <SetupChecklist done={setupDone} /> : null}
         <div className="grid grid-cols-2 gap-2">
           <div className="card p-3.5">
             <p className="text-xs uppercase tracking-wide text-zinc-400">{t("calories")}</p>
@@ -209,4 +242,38 @@ function conceptToNutrition(concept: typeof foodConcept.$inferSelect): Nutrition
     sugarsG: concept.sugarsG != null ? Number(concept.sugarsG) : null,
     saltG: concept.saltG != null ? Number(concept.saltG) : null,
   };
+}
+
+/** The intended first-session flow, linked step by step. Hidden once every step is done. */
+async function SetupChecklist({
+  done,
+}: {
+  done: { location: boolean; stores: boolean; offers: boolean; plan: boolean };
+}) {
+  const t = await getTranslations("Today");
+  const items = [
+    { done: done.location, label: t("setup.location"), href: "/profile" },
+    { done: done.stores, label: t("setup.stores"), href: "/stores" },
+    { done: done.offers, label: t("setup.offers"), href: "/offers" },
+    { done: done.plan, label: t("setup.plan"), href: "/week" },
+  ];
+  return (
+    <section className="card p-5">
+      <h2 className="text-sm font-semibold text-zinc-900">{t("setup.title")}</h2>
+      <ul className="mt-3 space-y-2">
+        {items.map((item) => (
+          <li key={item.href}>
+            <Link href={item.href} className="flex min-h-9 items-center gap-2 rounded-lg text-sm hover:text-brand-700">
+              {item.done ? (
+                <CheckIcon size={16} weight="bold" className="shrink-0 text-brand-600" aria-hidden />
+              ) : (
+                <CircleIcon size={16} className="shrink-0 text-zinc-300" aria-hidden />
+              )}
+              <span className={item.done ? "text-zinc-400" : "font-medium text-zinc-700"}>{item.label}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
 }

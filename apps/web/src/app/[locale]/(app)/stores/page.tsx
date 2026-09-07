@@ -6,6 +6,7 @@ import { db } from "@/server/db";
 import { retailer, store, userStorePrefs } from "@maqrivo/db";
 import { getSessionContext } from "@/server/session";
 import { MapPinIcon } from "@phosphor-icons/react/dist/ssr/MapPin";
+import { Link } from "@/i18n/navigation";
 import { formatDistance } from "@/lib/format";
 import { StoreCard } from "./store-card";
 import { DiscoverButton } from "./discover-button";
@@ -76,7 +77,15 @@ export default async function StoresPage() {
         <EmptyState
           icon={MapPinIcon}
           title={t("noStores")}
-          action={hasLocation ? <DiscoverButton variant="primary" /> : undefined}
+          action={
+            hasLocation ? (
+              <DiscoverButton variant="primary" />
+            ) : (
+              <Link href="/profile" className="btn-secondary mt-3">
+                {t("setupLocation")}
+              </Link>
+            )
+          }
         />
       ) : (
         <div className="space-y-6">
