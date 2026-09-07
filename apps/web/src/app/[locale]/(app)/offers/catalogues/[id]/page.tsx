@@ -12,6 +12,7 @@ export default async function CatalogueDetailPage({ params }: { params: Promise<
   const { id } = await params;
   const t = await getTranslations("Catalogues");
   const te = await getTranslations("Evidence");
+  const tc = await getTranslations("Common");
   const locale = await getLocale();
   const session = await getSessionContext();
   if (!session) notFound();
@@ -37,6 +38,9 @@ export default async function CatalogueDetailPage({ params }: { params: Promise<
 
   return (
     <>
+      <Link href="/offers" className="mb-2 inline-block text-xs text-zinc-500 hover:text-brand-700">
+        ← {tc("back")}
+      </Link>
       <div className="mb-4">
         <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
           {row.cat.title ?? `${row.retailerName} · ${t("cataloguesTitle")}`}
@@ -59,7 +63,11 @@ export default async function CatalogueDetailPage({ params }: { params: Promise<
         <p className="text-xs text-zinc-400">{t("reviewHint")}</p>
 
         {pages.length === 0 ? (
-          <p className="card p-6 text-center text-sm text-zinc-500">{t("noCatalogues")}</p>
+          promos.length > 0 ? (
+            <p className="card p-6 text-center text-sm text-zinc-500">{t("structuredOnly")}</p>
+          ) : (
+            <p className="card p-6 text-center text-sm text-zinc-500">{t("noCatalogues")}</p>
+          )
         ) : (
           pages.map((page) => (
             <PageCard

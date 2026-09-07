@@ -107,7 +107,9 @@ export async function syncRemoteCatalogues(input: {
           catalogueId: catRow.id,
           catalogue: rc,
         });
-        continue;
+        // Structured items and page images are complementary: pages are the
+        // browse/evidence surface, items are the promotion data. Keep fetching
+        // pages (Monoprix/G20 return none — the loop is a no-op for them).
       }
 
       for (const [index, pageUrl] of rc.pageImageUrls.slice(0, MAX_PAGES_PER_CATALOGUE).entries()) {
