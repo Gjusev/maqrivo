@@ -81,4 +81,22 @@ describe("sweep wiring (source drift guard)", () => {
     expect(env).toContain("CATALOGUE_AUTO_EXTRACT=0");
     expect(env).toContain("CATALOGUE_EXTRACT_BUDGET=20");
   });
+
+  it("manual trigger bypasses the kill-switch; scheduled runs stay gated", () => {
+    expect(runner).toContain("if (!opts?.manual && process.env.CATALOGUE_AUTO_EXTRACT !== \"1\")");
+  });
+
+  it("manual admin triggers thread the manual flag (queue handler + inline fallback)", () => {
+    expect(queue).toContain("runExtractionSweep(new Date(), { manual: data?.manual === true })");
+    const admin = readFileSync(
+      new URL("../src/app/[locale]/admin/ingestion/actions.ts", import.meta.url),
+      "utf8",
+    );
+    expect(admin).toContain("runExtractionSweep(new Date(), { manual: true })");
+  });
+
+  it("every attended sweep records an ingestionRun row for the admin view", () => {
+    expect(runner).toContain("page-extraction (manual)");
+    expect(runner).toContain(".update(ingestionRun)");
+  });
 });

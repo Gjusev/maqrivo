@@ -37,7 +37,7 @@ export async function startWorker(connectionString: string): Promise<void> {
     await boss.createQueue(name);
     await boss.work(name, { batchSize: 1 }, async (jobs) => {
       for (const job of jobs) {
-        await runJob(job.name as JobName);
+        await runJob(job.name as JobName, job.data as { manual?: boolean } | undefined);
       }
     });
   }
@@ -55,7 +55,7 @@ export async function startWorker(connectionString: string): Promise<void> {
   console.log("[pg-boss] worker started");
 }
 
-async function runJob(name: JobName): Promise<void> {
+async function runJob(name: JobName, data?: { manual?: boolean }): Promise<void> {
   if (name === "promotion-expiry") {
     const r = await runPromotionExpiry();
     console.log(`[job] promotion-expiry: ${String(r.expired)} expired`);
@@ -71,7 +71,7 @@ async function runJob(name: JobName): Promise<void> {
     const r = await runCatalogueSync();
     console.log(`[job] catalogue-sync: ${String(r.stores)} stores / ${String(r.newPages)} new pages`);
   } else if (name === "page-extraction") {
-    const r = await runExtractionSweep();
+    const r = await runExtractionSweep(new Date(), { manual: data?.manual === true });
     console.log(
       `[job] page-extraction: ${String(r.extracted)} extracted / ${String(r.skipped)} skipped / ${String(r.failed)} failed / ${String(r.promoted)} auto-confirmed`,
     );

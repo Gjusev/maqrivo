@@ -33,7 +33,7 @@ export async function triggerJobAction(
       await runPantryConsumptionSweep();
     } else if (job === "page-extraction") {
       const { runExtractionSweep } = await import("@/server/catalogues/extraction-runner");
-      await runExtractionSweep();
+      await runExtractionSweep(new Date(), { manual: true });
     } else if (job === "store-discovery") {
       const { runStoreDiscoverySweep } = await import("@/server/stores/discovery");
       await runStoreDiscoverySweep();
