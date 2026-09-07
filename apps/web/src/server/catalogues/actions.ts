@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../db";
 import {
@@ -117,19 +117,26 @@ export async function extractPageAction(pageId: string): Promise<{
   return { ok: true, candidates };
 }
 
-/** Latest extraction candidates for a page (persists across reloads). */
-export async function getPageCandidates(pageId: string): Promise<CatalogueCandidate[]> {
+/**
+ * Latest extraction candidates for a page (persists across reloads).
+ * `null` = the page was never extracted; `[]` = extraction ran and found
+ * nothing (the row is stored even for empty results).
+ */
+export async function getPageCandidates(pageId: string): Promise<CatalogueCandidate[] | null> {
   const rows = await db
     .select()
     .from(aiExtraction)
-    .where(eq(aiExtraction.kind, "catalogue_page"))
+    .where(
+      and(
+        eq(aiExtraction.kind, "catalogue_page"),
+        // jsonb filter — no dedicated index, but the kind index narrows the scan.
+        sql`${aiExtraction.output}->>'pageId' = ${pageId}`,
+      ),
+    )
     .orderBy(desc(aiExtraction.createdAt))
-    .limit(50);
-  const row = rows.find((r) => {
-    const out = r.output as { pageId?: string } | null;
-    return out?.pageId === pageId;
-  });
-  if (!row) return [];
+    .limit(1);
+  const row = rows[0];
+  if (!row) return null;
   const out = row.output as { items?: CatalogueCandidate[] } | null;
   return out?.items ?? [];
 }
@@ -150,7 +157,7 @@ const confirmSchema = z.object({
 });
 
 /** User confirms a candidate → it becomes a real promotion with photo evidence. */
-export async function confirmCandidateAction(input: unknown): Promise<{ ok: boolean; error?: string; promotionId?: string }> {
+export async function confirmCandidateAction(input: unknown): Promise<{ ok: boolean; error?: string; promotionId?: string; duplicate?: boolean }> {
   const session = await getSessionContext();
   if (!session) return { ok: false, error: "unauthorized" };
   const parsed = confirmSchema.safeParse(input);
@@ -169,6 +176,24 @@ export async function confirmCandidateAction(input: unknown): Promise<{ ok: bool
   if (d.promoPriceCents === null && d.regularPriceCents === null && d.pricePerKgCents === null) {
     return { ok: false, error: "price-required" };
   }
+
+  // Natural-key dedup (page + description + price): a double-tap, a
+  // re-extraction or a confirm-all after reload must not insert twice.
+  // Treated as success by the client — idempotent confirm.
+  const duplicate = (
+    await db
+      .select({ id: promotion.id })
+      .from(promotion)
+      .where(
+        and(
+          eq(promotion.cataloguePageId, d.pageId),
+          eq(promotion.descriptionRaw, d.description),
+          d.promoPriceCents != null ? eq(promotion.promoPriceCents, d.promoPriceCents) : isNull(promotion.promoPriceCents),
+        ),
+      )
+      .limit(1)
+  )[0];
+  if (duplicate) return { ok: true, promotionId: duplicate.id, duplicate: true };
 
   const evidence = catRow.page?.imageKey
     ? (await db.select().from(sourceEvidence).where(eq(sourceEvidence.storageKey, catRow.page.imageKey)).limit(1))[0]

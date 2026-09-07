@@ -6,6 +6,7 @@ import { catalogue, cataloguePage, promotion, retailer, store } from "@maqrivo/d
 import { getSessionContext } from "@/server/session";
 import { Link } from "@/i18n/navigation";
 import { PageUploader } from "./page-uploader";
+import { getPageCandidates } from "@/server/catalogues/actions";
 import { PageCard } from "./page-card";
 
 export default async function CatalogueDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -35,6 +36,10 @@ export default async function CatalogueDetailPage({ params }: { params: Promise<
     .orderBy(asc(cataloguePage.pageNumber));
 
   const promos = await db.select().from(promotion).where(eq(promotion.catalogueId, id));
+
+  // Hydrate each card with its latest persisted extraction so reloading the
+  // page doesn't force a second paid AI call. `null` = never extracted.
+  const candidatesByPage = await Promise.all(pages.map((page) => getPageCandidates(page.id)));
 
   return (
     <>
@@ -69,7 +74,7 @@ export default async function CatalogueDetailPage({ params }: { params: Promise<
             <p className="card p-6 text-center text-sm text-zinc-500">{t("noCatalogues")}</p>
           )
         ) : (
-          pages.map((page) => (
+          pages.map((page, index) => (
             <PageCard
               key={page.id}
               catalogueId={id}
@@ -77,6 +82,7 @@ export default async function CatalogueDetailPage({ params }: { params: Promise<
               pageNumber={page.pageNumber}
               defaultValidUntil={row.cat.validUntil ?? null}
               confirmedCount={promos.filter((p) => p.cataloguePageId === page.id).length}
+              initialCandidates={candidatesByPage[index]}
             />
           ))
         )}

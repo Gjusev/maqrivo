@@ -8,6 +8,7 @@ import {
   confirmCandidateAction,
   extractPageAction,
 } from "@/server/catalogues/actions";
+import { applyPrintedDates } from "@/server/catalogues/extraction";
 import type { CatalogueCandidate } from "@/server/catalogues/extraction";
 import { SparkleIcon } from "@phosphor-icons/react/dist/csr/Sparkle";
 import { CheckIcon } from "@phosphor-icons/react/dist/csr/Check";
@@ -37,24 +38,42 @@ export function PageCard({
   pageNumber,
   defaultValidUntil,
   confirmedCount,
+  initialCandidates,
 }: {
   catalogueId: string;
   pageId: string;
   pageNumber: number;
   defaultValidUntil: string | null;
   confirmedCount: number;
+  /** Persisted candidates from the latest extraction; null = never extracted, [] = ran but empty. */
+  initialCandidates?: CatalogueCandidate[] | null;
 }) {
   const t = useTranslations("Catalogues");
+  const te = useTranslations("Errors");
   const locale = useLocale();
   const router = useRouter();
-  const [candidates, setCandidates] = useState<CatalogueCandidate[] | null>(null);
+  // Hydrated from the latest persisted extraction: [] means extraction ran
+  // and found nothing, null means the page was never extracted.
+  const [candidates, setCandidates] = useState<CatalogueCandidate[] | null>(initialCandidates ?? null);
   const [extracting, setExtracting] = useState(false);
   const [extractError, setExtractError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState<Record<number, string>>({});
+  const [confirming, setConfirming] = useState<Record<number, boolean>>({});
   const [bulkPending, setBulkPending] = useState(false);
   const [basketAdded, setBasketAdded] = useState<Record<number, boolean>>({});
-  const [validUntil, setValidUntil] = useState(defaultValidUntil ?? "");
+  const [basketPending, setBasketPending] = useState<Record<number, boolean>>({});
+  const [validUntil, setValidUntil] = useState(() =>
+    initialCandidates?.length ? applyPrintedDates(initialCandidates, defaultValidUntil) : (defaultValidUntil ?? ""),
+  );
   const [fallbackUntil] = useState(() => new Date(Date.now() + 9 * 86_400_000).toISOString().slice(0, 10));
+
+  /** Typed server error codes → visible messages; unknown codes stay generic. */
+  function mapActionError(code: string | undefined): string {
+    if (code === "no-enabled-store") return t("noEnabledStore");
+    if (code === "price-required") return t("priceRequired");
+    return te("error");
+  }
 
   async function extract() {
     setExtracting(true);
@@ -65,13 +84,8 @@ export function PageCard({
       const list = result.candidates ?? [];
       setCandidates(list);
       // Prefer the validity printed on the leaflet itself when the model
-      // read one; fall back to the 9-day heuristic.
-      const printed = list.map((c) => c.validUntil).find((d) => typeof d === "string");
-      setValidUntil(printed ?? validUntil ?? (() => {
-        const inNineDays = new Date();
-        inNineDays.setDate(inNineDays.getDate() + 9);
-        return inNineDays.toISOString().slice(0, 10);
-      })());
+      // read one; shared with hydration via applyPrintedDates.
+      setValidUntil(applyPrintedDates(list, validUntil));
     } else if (result.error === "ai-not-configured") {
       setExtractError(t("aiNotConfigured"));
     } else {
@@ -79,7 +93,10 @@ export function PageCard({
     }
   }
 
-  async function confirm(candidate: CatalogueCandidate) {
+  async function confirm(candidate: CatalogueCandidate, opts?: { skipRefresh?: boolean }) {
+    if (confirming[candidate.index]) return;
+    setActionError(null);
+    setConfirming((prev) => ({ ...prev, [candidate.index]: true }));
     // A pct-only deal has no printed promo price; passing the regular price
     // as the "promo" price would erase the discount — send discountPct instead.
     const isPctDeal = candidate.mechanism === "PERCENTAGE_OFF";
@@ -98,9 +115,13 @@ export function PageCard({
       loyalty: candidate.loyalty,
       validUntil: validUntil || fallbackUntil,
     });
+    setConfirming((prev) => ({ ...prev, [candidate.index]: false }));
+    // `duplicate: true` is an idempotent success — same treatment, no special UI.
     if (result.ok && result.promotionId) {
       setConfirmed((prev) => ({ ...prev, [candidate.index]: result.promotionId! }));
-      router.refresh();
+      if (!opts?.skipRefresh) router.refresh();
+    } else if (!result.ok) {
+      setActionError(mapActionError(result.error));
     }
   }
 
@@ -110,18 +131,25 @@ export function PageCard({
     const pending = candidates.filter((c) => !confirmed[c.index]);
     setBulkPending(true);
     for (const candidate of pending) {
-      await confirm(candidate);
+      await confirm(candidate, { skipRefresh: true });
     }
     setBulkPending(false);
+    // One refresh for the whole batch, not one per candidate.
+    router.refresh();
   }
 
   async function addToBasket(candidateIndex: number) {
     const promotionId = confirmed[candidateIndex];
-    if (!promotionId) return;
+    if (!promotionId || basketPending[candidateIndex]) return;
+    setActionError(null);
+    setBasketPending((prev) => ({ ...prev, [candidateIndex]: true }));
     const result = await addToBasketAction(promotionId);
+    setBasketPending((prev) => ({ ...prev, [candidateIndex]: false }));
     if (result.ok) {
       setBasketAdded((prev) => ({ ...prev, [candidateIndex]: true }));
       router.refresh();
+    } else {
+      setActionError(mapActionError(result.error));
     }
   }
 
@@ -175,6 +203,7 @@ export function PageCard({
       ) : candidates !== null ? (
         <div className="border-t border-zinc-100 p-3.5">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">{t("candidates")}</p>
+          {actionError ? <p className="mb-2 text-xs text-red-600">{actionError}</p> : null}
           {candidates.length === 0 ? (
             <p className="text-sm text-zinc-500">{t("noCandidates")}</p>
           ) : (
@@ -245,15 +274,25 @@ export function PageCard({
                               {t("addedToBasket")}
                             </span>
                           ) : (
-                            <button type="button" className="btn-primary min-h-9 px-3 text-xs" onClick={() => void addToBasket(candidate.index)}>
+                            <button
+                              type="button"
+                              className="btn-primary min-h-9 px-3 text-xs"
+                              disabled={Boolean(basketPending[candidate.index])}
+                              onClick={() => void addToBasket(candidate.index)}
+                            >
                               <BasketIcon size={14} aria-hidden />
                               {t("addToBasket")}
                             </button>
                           )
                         ) : (
-                          <button type="button" className="btn-secondary min-h-9 px-3 text-xs" onClick={() => void confirm(candidate)}>
+                          <button
+                            type="button"
+                            className="btn-secondary min-h-9 px-3 text-xs"
+                            disabled={bulkPending || Boolean(confirming[candidate.index])}
+                            onClick={() => void confirm(candidate)}
+                          >
                             <CheckIcon size={14} aria-hidden />
-                            {t("confirm")}
+                            {confirming[candidate.index] ? t("confirming") : t("confirm")}
                           </button>
                         )}
                       </div>

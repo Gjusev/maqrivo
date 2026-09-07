@@ -83,8 +83,10 @@ export interface CatalogueCandidate {
  * Leaflets print end dates as "18/09", "18/09/2026" or ISO. Normalize to
  * "YYYY-MM-DD"; a missing year is inferred (past-by-6+months → next year —
  * leaflets look forward). Null when nothing date-shaped exists.
+ *
+ * `now` is injectable for deterministic tests; defaults to the clock.
  */
-export function parsePrintedDate(value: unknown): string | null {
+export function parsePrintedDate(value: unknown, now: Date = new Date()): string | null {
   if (typeof value !== "string") return null;
   const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
   if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
@@ -94,11 +96,16 @@ export function parsePrintedDate(value: unknown): string | null {
   const month = dmy[2]!.padStart(2, "0");
   let year = dmy[3] ? (dmy[3].length === 2 ? `20${dmy[3]}` : dmy[3]) : null;
   if (year === null) {
-    const now = new Date();
-    const candidate = Number(now.getFullYear());
-    // If that month/day is >6 months in the past, the leaflet means next year.
-    const diff = Number(month) * 100 + Number(day) - (Number(String(now.getMonth() + 1).padStart(2, "0")) * 100 + now.getDate());
-    year = String(diff < -630 ? candidate + 1 : candidate);
+    // Real calendar distance in Europe/Paris (leaflets are French; the server
+    // clock may run UTC). MMDD integer arithmetic breaks at year boundaries
+    // (31/12 vs 01/01 differ by "1130" despite one day) — never reintroduce it.
+    const [y, m, d] = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Paris" })
+      .format(now)
+      .split("-")
+      .map(Number) as [number, number, number];
+    const dayDiff =
+      (Date.UTC(y, Number(month) - 1, Number(day)) - Date.UTC(y, m - 1, d)) / 86_400_000;
+    year = String(dayDiff < -183 ? y + 1 : y);
   }
   return `${year}-${month}-${day}`;
 }
@@ -167,4 +174,19 @@ export function candidatesFromExtraction(output: unknown): CatalogueCandidate[] 
       };
     })
     .filter((c) => c.promoPriceCents !== null || c.regularPriceCents !== null || c.pricePerKgCents !== null);
+}
+
+/**
+ * Validity preference shared by extract() and hydration: use the first
+ * end date the leaflet actually prints, else keep what is already set
+ * (typed or catalogue default), else fall back to the 9-day heuristic
+ * (paper leaflets run short).
+ */
+export function applyPrintedDates(list: CatalogueCandidate[], current: string | null): string {
+  const printed = list.map((c) => c.validUntil).find((d) => typeof d === "string");
+  if (printed) return printed;
+  if (current) return current;
+  const inNineDays = new Date();
+  inNineDays.setDate(inNineDays.getDate() + 9);
+  return inNineDays.toISOString().slice(0, 10);
 }
