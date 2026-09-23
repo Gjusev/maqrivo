@@ -4,12 +4,52 @@
 
 Modular monolith. One Next.js application (App Router) serves UI and API route handlers; background jobs run inside the Node process via pg-boss (Postgres-backed); the deterministic solver is a bundled Python process spawned per solve with a JSON-over-stdio contract (ADR-0001). Deployment is `docker compose`: one app container (Node + Python + solver deps) + one PostgreSQL container. No Redis, no message broker, no microservices.
 
+## System diagram
+
+```mermaid
+flowchart TB
+    U[User · PWA fr/en<br/>offline-cached shopping plan] --> APP
+
+    subgraph APP[apps/web — Next.js 16 App Router]
+        UI[RSC + client islands<br/>map · barcode · assistant]
+        API[/api route handlers/]
+        JOBS[pg-boss schedule<br/>store · catalogue · promo · price runs]
+    end
+
+    CORE[packages/core<br/>pure TS domain<br/>money · units · nutrition<br/>promotions · freshness · matching]
+    CONTRACT[packages/solver-contract<br/>versioned JSON protocol]
+
+    API --> CORE
+    API --> DB[(PostgreSQL 17<br/>Drizzle + migrations<br/>provenance on every fact)]
+    JOBS --> DB
+    UI --> API
+
+    API --> OPT[optimization module<br/>builds problem · interprets plan]
+    OPT <--> CONTRACT
+    CONTRACT <--> PY[solver/worker.py<br/>CP-SAT: plan_meals · optimize_basket<br/>pure function of input]
+    PY --> R[status: OPTIMAL / FEASIBLE<br/>+ reason codes + bounds]
+
+    JOBS --> ING[ingestion<br/>per-source runs · failure isolation]
+    subgraph INTEG[server integrations]
+        OFF[Open Food Facts]
+        OP[Open Prices]
+        OSM[OSM · Overpass · Photon]
+        SM[supermarche.com]
+        RET[Retailer adapters<br/>capability-declared registry]
+    end
+    ING --> INTEG
+
+    API --> AII[AI provider interface]
+    AII --> ZAI[ZaiProvider → Z.AI GLM]
+    AII -.->|untrusted data delimited<br/>outputs zod-validated| UI
+```
+
 ## Repository layout (pnpm workspaces monorepo)
 
 ```
 maqrivo/
 ├── apps/
-│   └── web/                    # Next.js 15 (App Router): UI + /api route handlers + jobs runner
+│   └── web/                    # Next.js 16 (App Router): UI + /api route handlers + jobs runner
 ├── packages/
 │   ├── core/                   # Pure-TS domain logic — no Next, no DB, no network imports allowed
 │   │   ├── units/              # g/kg/ml/l/unit conversions (integer/decimal-safe)

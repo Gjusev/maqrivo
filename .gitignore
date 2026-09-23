@@ -24,3 +24,6 @@ test-results/
 .playwright-mcp/
 *.stackdump
 compose.local.yaml
+*.pem
+*.key
+.claude/
