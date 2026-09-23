@@ -1,98 +1,102 @@
-# Maqrivo
+﻿<h1 align="center">Maqrivo</h1>
+<p align="center"><strong>Meal planning meets grocery optimization.</strong></p>
+<p align="center">
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-059669?style=flat-square"></a>
+  <img alt="Next.js 16" src="https://img.shields.io/badge/Next.js-16-20252b?style=flat-square">
+  <img alt="PostgreSQL 17" src="https://img.shields.io/badge/PostgreSQL-17-20252b?style=flat-square">
+  <img alt="OR-Tools CP-SAT" src="https://img.shields.io/badge/solver-CP--SAT-20252b?style=flat-square">
+</p>
+<p align="center">
+  <a href="#quickstart">Quickstart</a> · <a href="#architecture">Architecture</a> · <a href="#screenshots">Screenshots</a> · <a href="docs/README.md">Documentation</a>
+</p>
 
-![Planner](docs/screenshots/planner.png)
+![Maqrivo Today: nutrition targets, meals, pantry expiry and shopping total](docs/screenshots/planner.png)
 
-**Grocery optimization with verifiable price provenance.** Given what you want to eat, your nutrition targets, your budget, your pantry and current supermarket prices — Maqrivo plans the week's meals and computes the exact basket to buy. A CP-SAT solver does the deciding; every price it decides with carries its evidence (store, quantity, date observed, source, validity).
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-![Next.js](https://img.shields.io/badge/Next.js%2016-App%20Router-black)
-![PostgreSQL 17](https://img.shields.io/badge/PostgreSQL-17-blue)
-![OR-Tools CP-SAT](https://img.shields.io/badge/Solver-OR--Tools%20CP--SAT-orange)
-![Tests](https://img.shields.io/badge/tests-158%20green-brightgreen)
+A self-hosted meal planner that turns nutrition targets, pantry stock and observed supermarket prices into a weekly plan and a shopping basket. **AI proposes recipes. Deterministic code computes nutrition. CP-SAT chooses the plan.**
 
 ## Why this exists
 
-Every meal planner on the market invents its numbers: fictional prices, fictional macros. I wanted the opposite loop — optimize what to actually **buy** from live prices and promotions, and never print a number the system can't prove. That principle ("no evidence, no deal") shaped the whole architecture: provenance is a first-class column, missing data beats fabricated data, and the AI proposes while deterministic code verifies.
+A cheap meal plan is only useful when its prices correspond to something you can buy. I built Maqrivo around price provenance: source, store, quantity, observation date and promotion validity travel with the data.
 
-## Status
+| Plan | Verify | Buy |
+| :--- | :--- | :--- |
+| Meals constrained by nutrition, budget and pantry | Recipe macros calculated from ingredient data | A basket grouped by store, with price evidence |
+| Python + OR-Tools CP-SAT | Pure TypeScript domain functions | Observations, promotions and retailer adapters |
 
-First complete vertical slice, live and self-hosted (M0–M11): French/English shell, auth, store discovery (Overpass + supermarche.com + Carrefour eligibility API), custom stores, Open Food Facts barcode import, manual + Open Prices observations with freshness, promotions with provenance and expiry, recipes with deterministic nutrition, pantry, CP-SAT meal planning and basket optimization (OPTIMAL end-to-end), Z.AI recipe generation — the model proposes, Maqrivo verifies the macros deterministically (a generated "Curry de poulet au yaourt grec" passed at 786 kcal / 78 g protein per serving) — and a tool-using assistant. 158 automated tests green (113 core, 22 web, 19 solver, 4 e2e).
-
-## Screenshots
-
-| | |
-|---|---|
-| ![Store map](docs/screenshots/store-map.png) | ![Recipe](docs/screenshots/recipe.png) |
-| Store discovery (OpenStreetMap + retailer directories) | Recipe with deterministic nutrition |
-| ![Basket](docs/screenshots/basket.png) | ![Offers](docs/screenshots/offers.png) |
-| Solver output — the basket to buy, grouped by store, with the recommended route | Offers with provenance and expiry |
+**Status:** working product under active development. English and French UI. Coverage depends on available price observations; missing data is not replaced with invented prices. Screenshots show seeded demonstration data.
 
 ## Quickstart
 
+Requires Node.js 22+, pnpm 11, Docker, and Python 3.11+ with `uv` for the solver.
+
 ```bash
-pnpm install
-cp .env.example .env            # set SIGNUP_INVITE_CODE, BETTER_AUTH_SECRET
-cp .env apps/web/.env.local     # Next only loads env from apps/web/
-pnpm dev:deps                   # postgres 17 via docker compose
+git clone https://github.com/Gjusev/maqrivo.git
+cd maqrivo
+pnpm install --frozen-lockfile
+cp .env.example .env
+# Set SIGNUP_INVITE_CODE and a random BETTER_AUTH_SECRET in .env.
+cp .env apps/web/.env.local
+uv sync --directory solver
+pnpm dev:deps
 pnpm db:migrate
-pnpm --filter @maqrivo/db seed:global   # retailers + food concepts
-pnpm db:seed                    # optional dev data: dev user, recipes, weekly plan
-pnpm dev                        # http://localhost:3000  (/fr default, /en available)
+pnpm --filter @maqrivo/db seed:global
+pnpm db:seed
+pnpm dev
 ```
 
-Seeded demo login: `dev@maqrivo.local` / `dev-password-123`. The solver needs Python ≥3.11 with OR-Tools — `cd solver && uv sync` creates the venv the app auto-detects.
+Open [localhost:3000/en](http://localhost:3000/en). The optional development seed creates `dev@maqrivo.local` / `dev-password-123`. Keep the two environment files in sync when changing configuration. On PowerShell, use `Copy-Item` in place of `cp`.
 
-Gates: `pnpm lint` · `pnpm typecheck` · `pnpm test` · `pnpm solver:test` (Python ≥3.11, installs OR-Tools) · `pnpm test:e2e` (Playwright)
-
-Production: `docker compose -f compose.prod.yaml up -d --build` (single app container + Postgres; `POSTGRES_PASSWORD` required from env).
+AI features require a configured provider key. [Setup, checks and deployment →](docs/getting-started.md)
 
 ## Architecture
 
-Modular monolith: one Next.js app serves UI, API and in-process pg-boss jobs; the deterministic solver is a Python subprocess speaking a versioned JSON-over-stdio contract; one Postgres holds everything. No Redis, no broker, no microservices.
-
 ```mermaid
 flowchart LR
-    U[User · PWA<br/>fr/en · offline plan cache] --> APP
-
-    subgraph APP[Next.js 16 App Router]
-        UI[RSC + client islands<br/>map · scanner · assistant]
-        API[API route handlers]
-        JOBS[pg-boss jobs<br/>in-process]
-    end
-
-    API --> CORE[packages/core<br/>pure domain: money · units ·<br/>nutrition · promotions · matching]
-    API --> DB[(PostgreSQL 17<br/>Drizzle · provenance columns)]
-    JOBS --> DB
-
-    API --> SOLVER
-    subgraph SOLVER[Python CP-SAT subprocess]
-        W[worker.py · JSON over stdio<br/>plan_meals · optimize_basket]
-    end
-
-    JOBS --> ING
-    subgraph ING[server integrations]
-        OFF[Open Food Facts]
-        OP[Open Prices]
-        OSM[OSM / Overpass / Photon]
-        RET[Retailer adapters<br/>capability-declared]
-    end
-
-    API --> AI[AI provider interface<br/>Z.AI implementation]
-    AI --> ZAI[Z.AI GLM API]
-
-    ING --> WORLD[external endpoints<br/>hard backoff · no protection bypass]
+    UI["Next.js · UI and API"] --> CORE["Domain logic · nutrition and prices"]
+    UI --> DB[(PostgreSQL)]
+    UI <-->|"JSON over stdio"| SOLVER["Python · CP-SAT"]
+    JOBS["pg-boss · ingestion"] --> DB
+    SOURCES["Retailers · Open Prices · Open Food Facts"] --> JOBS
+    UI --> AI["AI provider · recipe proposals"]
+    AI --> CORE
 ```
 
-Full detail: [`docs/architecture.md`](docs/architecture.md) — plus [data sources](docs/data_sources.md), [domain model](docs/domain_model.md), [CP-SAT optimization](docs/optimization.md), [retailer adapters](docs/retailer_adapters.md), [AI boundaries](docs/ai.md), [deployment](docs/deployment.md), and the [ADRs](docs/adr/).
+One application, one database, one solver subprocess. Price ingestion uses Postgres-backed jobs; the solver receives a versioned input document and has no database access. [Architecture and boundaries →](docs/architecture.md)
+
+## Screenshots
+
+| Store discovery | Recipe nutrition |
+| :---: | :---: |
+| ![Stores on the map](docs/screenshots/store-map.png) | ![Recipe and calculated nutrition](docs/screenshots/recipe.png) |
+| Store locations and available sources | Calculated macros per serving |
+
+<details>
+<summary><strong>View the shopping basket and offers</strong></summary>
+
+| Shopping basket | Offers |
+| :---: | :---: |
+| ![Basket grouped by store](docs/screenshots/basket.png) | ![Offers with provenance and expiry](docs/screenshots/offers.png) |
+
+</details>
+
+## Engineering decisions
+
+| Decision | Benefit | Cost |
+| :--- | :--- | :--- |
+| Integer cents and explicit units | Repeatable price and nutrition calculations | More normalization at ingestion |
+| CP-SAT behind a JSON contract | Solver can be tested independently | Process startup and timeout handling |
+| Postgres-backed jobs | One datastore to operate | Jobs share the web process lifecycle |
+| AI outputs treated as proposals | Model output does not become trusted nutrition data | Validation and repair are required |
 
 ## What I'd do differently
 
-1. **Warm the solver earlier.** Each solve spawns a fresh Python subprocess — trivially testable and fine for a household, but the ~1–2 s cold start would need a warm worker pool the day there are concurrent users.
-2. **Lead with the observation UX, not the integrations.** Retailer APIs were mostly dead ends; crowd coverage (Open Prices) plus fast manual entry turned out to be the real data engine. I'd build that loop first and let adapters accrete slowly behind it.
-3. **Separate the job runner sooner.** pg-boss inside the web process means a deploy restarts in-flight ingestion. Cheap fix later, but it's a deliberate coupling I'd revisit.
+- **Start with price entry and coverage.** A reliable observation workflow matters more than the number of retailer integrations.
+- **Warm the solver when concurrency warrants it.** A subprocess is simple to isolate; a pool would avoid repeated startup work.
+- **Separate the job runner before scaling ingestion.** Deploying the web application currently interrupts the same process that runs jobs.
 
-## Author
+[Documentation index](docs/README.md) · [Optimization](docs/optimization.md) · [AI boundaries](docs/ai.md) · [Decision records](docs/adr/)
 
-**Youssef Ouhaghi Ahmian** — [mokka-agentur.de](https://mokka-agentur.de) · [GitHub](https://github.com/Gjusev)
+---
 
-MIT License — see [LICENSE](LICENSE).
+Built by **Youssef Ouhaghi Ahmian** · [Mokka](https://mokka-agentur.de) · [GitHub](https://github.com/Gjusev)  
+Released under the [MIT license](LICENSE).

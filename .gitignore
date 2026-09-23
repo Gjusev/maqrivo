@@ -27,3 +27,6 @@ compose.local.yaml
 *.pem
 *.key
 .claude/
+
+# brag video workspace
+brag-output/
