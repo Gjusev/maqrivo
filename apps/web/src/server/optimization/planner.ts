@@ -378,7 +378,8 @@ export async function optimizeShoppingForUser(
     priceByProductStore.set(`${row.product_id}:${row.store_id}`, {
       amountCents: row.amount_cents,
       priceBasis: row.price_basis,
-      observedAt: row.observed_at,
+      // Raw db.execute rows are unparsed by the driver — timestamps arrive as strings.
+      observedAt: new Date(row.observed_at),
       source: row.source,
     });
   }
