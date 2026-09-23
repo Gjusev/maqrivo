@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "seed": "tsx src/scripts/seed.ts",
+    "seed": "tsx --env-file=../../.env src/scripts/seed.ts",
     "generate:vapid": "node scripts/generate-vapid.mjs",
     "test": "vitest run --passWithNoTests"
   },

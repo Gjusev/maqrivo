@@ -12,7 +12,7 @@
     "test": "vitest run --passWithNoTests",
     "generate": "drizzle-kit generate",
     "migrate": "drizzle-kit migrate",
-    "seed:global": "tsx src/seed/run.ts"
+    "seed:global": "tsx --env-file=../../.env src/seed/run.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.0",
