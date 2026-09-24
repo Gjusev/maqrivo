@@ -12,7 +12,7 @@
 
 ![Maqrivo Today: nutrition targets, meals, pantry expiry and shopping total](docs/screenshots/planner.png)
 
-[▶ 20s demo video](docs/screenshots/brag.mp4) — the app in motion.
+[![20s demo video — click to play](docs/screenshots/brag-poster.png)](docs/screenshots/brag.mp4)
 
 A self-hosted meal planner that turns nutrition targets, pantry stock and observed supermarket prices into a weekly plan and a shopping basket. **AI proposes recipes. Deterministic code computes nutrition. CP-SAT chooses the plan.**
 
