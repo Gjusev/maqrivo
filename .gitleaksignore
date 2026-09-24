@@ -1,0 +1,4 @@
+# Static public viewer identifier shipped by the retailer to every browser.
+# See the provenance comment in apps/web/src/server/integrations/retailers/intermarche.ts.
+# This exact historical finding is not an owner credential. Do not ignore the whole file.
+e2ca36d21a4efe537cd8e5f86c0d00b0b82894d1:apps/web/src/server/integrations/retailers/intermarche.ts:generic-api-key:21

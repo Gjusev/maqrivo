@@ -36,10 +36,16 @@ model only proposes, code verifies. See [ai.md](ai.md).
 ```bash
 pnpm lint
 pnpm typecheck
-pnpm test            # core + web unit tests
-pnpm solver:test     # pytest in solver/
+pnpm --filter @maqrivo/core test
+pnpm --filter @maqrivo/web test
+uv run --directory solver --with pytest pytest -q
 pnpm test:e2e        # Playwright (app must be running)
 ```
+
+The root `pnpm test` also traverses the e2e workspace, so it requires the
+seeded app to be running. Use the filtered commands above for unit tests
+without a browser server. The solver command uses its own uv environment and
+adds pytest for the test run; pytest is not a runtime solver dependency.
 
 ## Deployment
 

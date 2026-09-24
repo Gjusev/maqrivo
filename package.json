@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "pnpm --filter @maqrivo/web dev",
-    "dev:deps": "docker compose up -d db",
+    "dev:deps": "docker compose up -d --wait db",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",

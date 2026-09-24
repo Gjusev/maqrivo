@@ -1,4 +1,6 @@
-# Maqrivo Architecture (v1 — pending plan approval)
+# Maqrivo architecture
+
+[← Documentation](README.md) · [Getting started](getting-started.md)
 
 ## Shape
 
